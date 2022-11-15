@@ -1,0 +1,3 @@
+# ignores our project directories - subsequent generation runs will ignore this files
+build.sbt
+project/**

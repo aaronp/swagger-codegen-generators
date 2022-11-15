@@ -1,11 +1,32 @@
 name := "{{artifactId}}"
-version := "0.0.1-SNAPSHOT"
 scalaVersion := "3.2.1"
-scalafmtOnCompile := true
-libraryDependencies ++= Seq(
-  "com.lihaoyi" %% "cask" % "0.8.3" ,
-  "com.lihaoyi" %% "upickle" % "2.0.0",
-  "com.softwaremill.sttp.client3" %% "core" % "3.8.3"
-)
-// this corresponds to setting e.g. --additional-properties sourceFolder=src_openapi in swagger-cli
-Compile / unmanagedSourceDirectories += baseDirectory.value / "src_openapi"
+
+ThisBuild / scalafmtOnCompile := true
+//ThisBuild / scalafmtVersion := "1.4.0"
+
+// see https://github.com/portable-scala/sbt-crossproject
+lazy val client = crossProject(JSPlatform, JVMPlatform)
+  .crossType(CrossType.Full)
+  .withoutSuffixFor(JVMPlatform)
+  .in(file("client"))
+  .settings(name := "client")
+  .settings(libraryDependencies += "com.lihaoyi" %%% "upickle" % "2.0.0")
+  .jvmSettings(name := "client-jvm")
+  .settings(libraryDependencies += "com.lihaoyi" %% "requests" % "0.7.1")
+  .jsSettings(scalaJSUseMainModuleInitializer in Global := true)
+  .jsSettings(name := "client-js")
+  .jsSettings(test := {}) // ignore JS tests - they're all done on the JVM
+
+lazy val clientJVM = client.jvm
+lazy val clientJS  = client.js
+
+lazy val root = (project in file("."))
+  .aggregate(
+    clientJS,
+    clientJVM
+  )
+  .settings(
+    // don't publish the root artifact
+    publish := {},
+    publishLocal := {}
+  )

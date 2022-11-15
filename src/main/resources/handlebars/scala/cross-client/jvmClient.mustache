@@ -1,0 +1,24 @@
+{{>licenseInfo}}
+
+package {{apiPackage}}
+
+{{#imports}}import _root_.{{import}}
+{{/imports}}
+
+trait {{classname}}JVMClient {
+{{#operations}}
+{{#operation}}
+  /** {{summary}}
+   * {{description}}
+   * parameters:
+{{#params}}
+   * @{{paramName}} : {{dataType}}
+{{/params}}
+   * @return {{returnType}}
+   */
+  def {{operationId}}() = {
+    ServiceResponse.notImplemented
+  }
+{{/operation}}
+{{/operations}}
+}

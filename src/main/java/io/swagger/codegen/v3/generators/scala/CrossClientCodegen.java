@@ -17,8 +17,6 @@ public class CrossClientCodegen extends AbstractScalaCodegen {
     private String appName;
     private String infoEmail;
 
-    static String ApiServiceTemplate = "apiService.mustache";
-
     public CrossClientCodegen() {
         super();
 
@@ -86,24 +84,22 @@ public class CrossClientCodegen extends AbstractScalaCodegen {
     public void processOpts() {
         super.processOpts();
 
-        outputFolder = env("OUTPUT_DIR", orElse(outputFolder, "generated-code/cask"));
+        outputFolder = env("OUTPUT_DIR", orElse(outputFolder, "generated-code/cross-client"));
         groupId = env("GROUP_ID", orElse(groupId, "io.swagger"));
-        artifactId = env("ARTIFACT_ID", orElse(artifactId, "caskgen"));
+        artifactId = env("ARTIFACT_ID", orElse(artifactId, "cross-client"));
         basePackage = env("PACKAGE", groupId);
         artifactVersion = env("VERSION", orElse(artifactVersion, "0.0.1"));
-        appName = env("APP_NAME", orElse(appName, "Cask App"));
+        appName = env("APP_NAME", orElse(appName, "Cross-Client"));
         infoEmail = env("INFO_EMAIL", "apiteam@swagger.io");
         apiPackage = env("API_PACKAGE", orElse(apiPackage, basePackage + ".server.api"));
         modelPackage = env("MODEL_PACKAGE", orElse(modelPackage, basePackage + ".server.model"));
 
-        apiTemplateFiles.put("apiRoutes.mustache", ".scala");
-        apiTemplateFiles.put(ApiServiceTemplate, "Service.scala");
-
-        final String sourceDir = ensureSuffix(env("SCALA_SRC", orElse(sourceFolder, "src/main/scala/")), "/");
+//        final String sourceDir = ensureSuffix(env("SCALA_SRC", orElse(sourceFolder, "src/main/scala/")), "/");
         final String appPackage = env("APP_PACKAGE", basePackage);
-        final String appPath = sourceDir + appPackage.replace('.', '/');
-        final String apiPath = sourceDir + apiPackage.replace('.', '/');
-        final String modelPath = sourceDir + modelPackage.replace('.', '/');
+        final String appPath = appPackage.replace('.', '/');
+        final String modelPath = "client/shared/src/main/scala/" + appPath;
+        final String jsClientPath = "client/js/src/main/scala/" + appPath;
+        final String jvmClientPath = "client/jvm/src/main/scala/" + appPath;
 
 
         {
@@ -112,13 +108,13 @@ public class CrossClientCodegen extends AbstractScalaCodegen {
             settings.put("appName", appName);
             settings.put("appPackage", appPackage);
             settings.put("sourceFolder", sourceFolder);
-            settings.put("sourceDir", sourceDir);
             settings.put("apiPackage", apiPackage);
             settings.put("basePackage", basePackage);
             settings.put("artifactId", artifactId);
             settings.put("groupId", groupId);
             settings.put("outputFolder", outputFolder);
-            System.out.println("\n" +
+            System.out.println("" +
+                "\uD83C\uDD82\uD83C\uDD72\uD83C\uDD70\uD83C\uDD7B\uD83C\uDD70 \uD83C\uDD72\uD83C\uDD81\uD83C\uDD7E\uD83C\uDD82\uD83C\uDD82-\uD83C\uDD72\uD83C\uDD7B\uD83C\uDD78\uD83C\uDD74\uD83C\uDD7D\uD83C\uDD83 \n" +
                 ScalaCaskCodegen.formatMap(settings) + "\n\n"
             );
         }
@@ -141,19 +137,26 @@ public class CrossClientCodegen extends AbstractScalaCodegen {
         additionalProperties.putIfAbsent(CodegenConstants.ARTIFACT_ID, artifactId);
         additionalProperties.putIfAbsent(CodegenConstants.ARTIFACT_VERSION, artifactVersion);
         additionalProperties.putIfAbsent(CodegenConstants.PACKAGE_NAME, basePackage);
+        Object oldSrc = additionalProperties.get(CodegenConstants.SOURCE_FOLDER);
+        if (oldSrc != null) {
+            System.out.println("WARNING: replacing " + oldSrc + " '' with " + modelPath);
+        }
+        additionalProperties.put(CodegenConstants.SOURCE_FOLDER, modelPath);
 
-        supportingFiles.add(new SupportingFile("README.mustache", "", "README.md"));
-        supportingFiles.add(new SupportingFile("build.sbt.mustache", "", "build.sbt"));
-        supportingFiles.add(new SupportingFile(".scalafmt.conf.mustache", "", ".scalafmt.conf"));
-        supportingFiles.add(new SupportingFile("gitignore.mustache", "", ".gitignore"));
-        supportingFiles.add(new SupportingFile("appPackage.mustache", appPath, "package.scala"));
-        supportingFiles.add(new SupportingFile("apiPackage.mustache", apiPath, "package.scala"));
-        supportingFiles.add(new SupportingFile("modelPackage.mustache", modelPath, "package.scala"));
-        supportingFiles.add(new SupportingFile("app.mustache", appPath, "App.scala"));
+        supportingFiles.add(new SupportingFile("README.mustache", "README.md"));
+
+        // TODO - put this back in when you're done developing @Aaron
+        supportingFiles.add(new SupportingFile(".swagger-codegen-ignore", ".swagger-codegen-ignore--todo-put-this-back"));
+
+
+        supportingFiles.add(new SupportingFile("build.sbt.mustache", "build.sbt"));
+        supportingFiles.add(new SupportingFile(".scalafmt.conf.mustache", ".scalafmt.conf"));
+        supportingFiles.add(new SupportingFile("gitignore.mustache", ".gitignore"));
         supportingFiles.add(new SupportingFile("project/build.properties", "project", "build.properties"));
         supportingFiles.add(new SupportingFile("project/plugins.sbt", "project", "plugins.sbt"));
-        supportingFiles.add(new SupportingFile("serviceResponse.mustache", apiPath, "ServiceResponse.scala"));
-
+        supportingFiles.add(new SupportingFile("jvmClient.mustache", jvmClientPath, "JVMClient.scala"));
+        supportingFiles.add(new SupportingFile("jsClient.mustache", jsClientPath, "JSClient.scala"));
+        supportingFiles.add(new SupportingFile("commonClient.mustache", modelPath, "Client.scala"));
 
         instantiationTypes.put("array", "Seq");
         instantiationTypes.put("map", "Map");
@@ -172,11 +175,7 @@ public class CrossClientCodegen extends AbstractScalaCodegen {
     public String apiFilename(String templateName, String tag) {
         final String suffix = apiTemplateFiles().get(templateName);
         final String fn = toApiFilename(tag);
-        if (templateName.equals(ApiServiceTemplate)) {
-            return apiFileFolder() + '/' + fn + suffix;
-        } else {
-            return apiFileFolder() + '/' + fn + "Routes" + suffix;
-        }
+        return apiFileFolder() + '/' + fn + suffix;
     }
 
     @Override
@@ -196,7 +195,7 @@ public class CrossClientCodegen extends AbstractScalaCodegen {
 
     @Override
     public String getName() {
-        return "cross-client";
+        return "scala-cross-client";
     }
 
     @Override
