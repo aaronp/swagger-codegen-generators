@@ -2,9 +2,12 @@ package io.swagger.codegen.v3.generators.scala;
 
 import io.swagger.codegen.v3.*;
 
+import java.io.File;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static io.swagger.codegen.v3.generators.scala.ScalaCaskCodegen.consumesMimetype;
 
 public class CrossClientCodegen extends AbstractScalaCodegen {
 
@@ -94,7 +97,7 @@ public class CrossClientCodegen extends AbstractScalaCodegen {
         apiPackage = env("API_PACKAGE", orElse(apiPackage, basePackage + ".server.api"));
         modelPackage = env("MODEL_PACKAGE", orElse(modelPackage, basePackage + ".server.model"));
 
-//        final String sourceDir = ensureSuffix(env("SCALA_SRC", orElse(sourceFolder, "src/main/scala/")), "/");
+//        final String sourceDir = ensureSuffix(env("SCALA_SRC", orElse(sourceFolder, "src/main/scala/")), File.separator);
         final String appPackage = env("APP_PACKAGE", basePackage);
         final String appPath = appPackage.replace('.', '/');
         final String modelPath = "client/shared/src/main/scala/" + appPath;
@@ -163,6 +166,12 @@ public class CrossClientCodegen extends AbstractScalaCodegen {
     }
 
     @Override
+    public String modelFileFolder() {
+        Object src = additionalProperties.get(CodegenConstants.SOURCE_FOLDER);
+        return outputFolder + File.separator + src;
+    }
+
+    @Override
     public String toApiName(String name) {
         if (name.length() == 0) {
             return "DefaultApi";
@@ -225,45 +234,6 @@ public class CrossClientCodegen extends AbstractScalaCodegen {
         return result;
     }
 
-    static boolean consumesMimetype(CodegenOperation op, String mimetype) {
-        // people don't always/often specify the 'consumes' property, so we assume true when
-        // the optional 'consumes' is null or empty
-        boolean defaultRetValue = true;
-
-        final List<Map<String, String>> consumes = op.consumes;
-        if (consumes != null) {
-            for (Map<String, String> c : consumes) {
-                final String mt = c.get("mediaType");
-                if (mt.equalsIgnoreCase(mimetype)) {
-                    return true;
-                }
-            }
-            return false;
-        } else {
-            return defaultRetValue;
-        }
-    }
-
-    static String capitalise(String p) {
-        if (p.length() < 2) {
-            return p.toUpperCase();
-        } else {
-            String first = "" + p.charAt(0);
-            return first.toUpperCase() + p.substring(1);
-        }
-    }
-
-    static String nonParamPathPrefix(CodegenOperation op) {
-        if (op.pathParams.isEmpty()) {
-            return op.path;
-        }
-
-        final String firstParam = op.pathParams.stream().findFirst().get().paramName;
-        final int i = op.path.indexOf(firstParam);
-        final String path = chompSuffix(op.path.substring(0, i - 1), "/");
-        return path;
-    }
-
     @Override
     public Map<String, Object> postProcessOperations(Map<String, Object> objs) {
         final Map<String, Object> operations = (Map<String, Object>) objs.get("operations");
@@ -311,93 +281,12 @@ public class CrossClientCodegen extends AbstractScalaCodegen {
 
 
         // for the declaration site
-        op.vendorExtensions.put("x-cask-path-typed", routeArgs(op));
         op.vendorExtensions.put("x-query-args", queryArgs(op));
 
-        op.vendorExtensions.put("x-response-type", enrichResponseType(op));
+        op.vendorExtensions.put("x-response-type", ScalaCaskCodegen.enrichResponseType(op));
         String responseDebug = String.join("\n\n - - - - - - -\n\n", op.responses.stream().map(r -> ScalaCaskCodegen.inComment(pretty(r))).collect(Collectors.toList()));
         op.vendorExtensions.put("x-responses", responseDebug);
     }
-
-    /**
-     * The Service methods are decoupled from http Responses -- they return a typed 'ServiceResponse'.
-     * This method tries to fill int the ServiceResponse type parameter
-     * For example:
-     * {{{
-     * "200": {
-     * "description": "successful operation",
-     * "schema": {
-     * "type": "string"
-     * }
-     * },
-     * "400": {
-     * "description": "Invalid username/password supplied"
-     * }
-     * }}}
-     *
-     * @param op
-     * @return
-     */
-    private static String enrichResponseType(CodegenOperation op) {
-        if (op.returnType != null && !op.returnType.isEmpty()) {
-            return "ServiceResponse[" + op.returnType + "]";
-        }
-        Optional<CodegenResponse> successResponse = op.responses.stream().filter((r) -> r.code.startsWith("2")).findFirst();
-        if (successResponse.isPresent()) {
-            CodegenResponse r = successResponse.get();
-
-            return "ServiceResponse[Unit] /**" +
-                "containerType='" + r.containerType + "'\n" +
-                "baseType='" + r.baseType + "'\n" +
-                "dataType='" + r.dataType + "'\n" +
-                "simpleType='" + r.getSimpleType() + "'\n" +
-                "jsonSchema='" + r.jsonSchema + "'\n" +
-                "schema='" + r.schema + "'\n" +
-                "*/";
-        } else {
-            return "ServiceResponse[Unit]";
-        }
-    }
-
-    private static CodegenParameter pathParamForName(CodegenOperation op, String pathParam) {
-        final CodegenParameter param = op.pathParams.stream().filter(p -> p.paramName.equals(pathParam)).findFirst().get();
-        if (param == null) {
-            throw new RuntimeException("Bug: path param " + pathParam + " not found");
-        }
-        return param;
-    }
-
-    /**
-     * The path placeholders as well as query parameters
-     *
-     * @param op the codegen operations
-     * @return a list of both the path and query parameters as typed arguments (e.g. "aPathArg : Int, request: cask.Request, aQueryArg : Option[Long]")
-     */
-    private static String routeArgs(CodegenOperation op) {
-        final Stream<String> pathParamNames = Arrays.stream(op.path.split("/", -1)).filter(p -> hasBrackets(p)).map(p -> {
-            final CodegenParameter param = pathParamForName(op, chompBrackets(p));
-            param.vendorExtensions.put("x-debug", ScalaCaskCodegen.inComment(pretty(param)));
-            return param.paramName + " : " + asScalaDataType(param);
-        });
-
-
-        final List<String> pathList = pathParamNames.collect(Collectors.toList());
-
-        // we always include the cask request
-        pathList.add("request: cask.Request");
-
-        final Stream<String> queryParams = op.queryParams.stream().map(p -> {
-            p.vendorExtensions.put("x-default-value", defaultValue(p));
-            return p.paramName + " : " + asScalaDataType(p);
-        });
-        pathList.addAll(queryParams.collect(Collectors.toList()));
-        return pathList.isEmpty() ? "" : (String.join(", ", pathList));
-    }
-
-    private static String defaultValue(CodegenParameter p) {
-        return ScalaCaskCodegen.pretty(p);
-    }
-
 
     private static String queryArgs(final CodegenOperation op) {
         final List<String> list = op.queryParams.stream().map(p -> p.paramName).collect(Collectors.toList());
@@ -415,22 +304,6 @@ public class CrossClientCodegen extends AbstractScalaCodegen {
         return dataType;
     }
 
-    private static String chompBrackets(String str) {
-        return str.replace("{", "").replace("}", "");
-    }
-
-    private static String chompSuffix(String str, String suffix) {
-        return str.endsWith(suffix) ? chompSuffix(str.substring(0, str.length() - suffix.length()), suffix) : str;
-    }
-
-    private static String ensureSuffix(String str, String suffix) {
-        return str.endsWith(suffix) ? str : str + suffix;
-    }
-
-    private static boolean hasBrackets(String str) {
-        return str.matches("^\\{(.*)\\}$");
-    }
-
     static String containerType(String dataType) {
         String fixedForList = dataType.replaceAll(".*\\[(.*)\\]", "$1");
         // do we have to fix map?
@@ -438,11 +311,11 @@ public class CrossClientCodegen extends AbstractScalaCodegen {
     }
 
     static String env(String key, String defaultValue) {
-        return orElse(orElse(System.getenv().get(key), System.getProperty(key)), defaultValue);
+        return ScalaCaskCodegen.env(key, defaultValue);
     }
 
     static String orElse(String value, String valueWhenEmpty) {
-        return (value == null || value.trim().isEmpty()) ? valueWhenEmpty : value;
+        return ScalaCaskCodegen.orElse(value, valueWhenEmpty);
     }
 
     static String pretty(CodegenResponse response) {

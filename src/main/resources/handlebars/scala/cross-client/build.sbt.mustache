@@ -1,8 +1,7 @@
 name := "{{artifactId}}"
-scalaVersion := "3.2.1"
+ThisBuild / scalaVersion := "3.2.1"
 
 ThisBuild / scalafmtOnCompile := true
-//ThisBuild / scalafmtVersion := "1.4.0"
 
 // see https://github.com/portable-scala/sbt-crossproject
 lazy val client = crossProject(JSPlatform, JVMPlatform)

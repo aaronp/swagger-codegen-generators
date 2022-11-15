@@ -2,6 +2,7 @@ package io.swagger.codegen.v3.generators.scala;
 
 import io.swagger.codegen.v3.*;
 
+import java.io.File;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -101,7 +102,7 @@ public class ScalaCaskCodegen extends AbstractScalaCodegen {
         apiTemplateFiles.put("apiRoutes.mustache", ".scala");
         apiTemplateFiles.put(ApiServiceTemplate, "Service.scala");
 
-        final String sourceDir = ensureSuffix(env("SCALA_SRC", orElse(sourceFolder, "src/main/scala/")), "/");
+        final String sourceDir = ensureSuffix(env("SCALA_SRC", orElse(sourceFolder, "src/main/scala/")), File.separator);
         final String appPackage = env("APP_PACKAGE", basePackage);
         final String appPath = sourceDir + appPackage.replace('.', '/');
         final String apiPath = sourceDir + apiPackage.replace('.', '/');
@@ -418,7 +419,7 @@ public class ScalaCaskCodegen extends AbstractScalaCodegen {
             this.pathPrefix = pathPrefix;
             caskAnnotation = "@cask." + httpMethod.toLowerCase();
 
-            List<String> stripped = Arrays.stream(pathPrefix.split("/", -1))
+            List<String> stripped = Arrays.stream(pathPrefix.split(File.separator, -1))
                 .map(p -> capitalise(p)).collect(Collectors.toList());
 
             methodName = "routeWorkAroundFor" + capitalise(httpMethod) + "" + String.join("", stripped);
@@ -433,7 +434,7 @@ public class ScalaCaskCodegen extends AbstractScalaCodegen {
             }
 
             final List<ParamPart> pathParts = new ArrayList<>();
-            final List<String> parts = Arrays.stream(op.path.substring(pathPrefix.length()).split("/", -1)).filter(p -> !p.isEmpty()).collect(Collectors.toList());
+            final List<String> parts = Arrays.stream(op.path.substring(pathPrefix.length()).split(File.separator, -1)).filter(p -> !p.isEmpty()).collect(Collectors.toList());
             for (int i = 0; i < parts.size(); i++) {
                 String p = parts.get(i);
                 ParamPart pp = hasBrackets(p) ? new ParamPart(chompBrackets(p), pathParamForName(op, chompBrackets(p))) : new ParamPart(p, null);
@@ -489,7 +490,7 @@ public class ScalaCaskCodegen extends AbstractScalaCodegen {
 
         final String firstParam = op.pathParams.stream().findFirst().get().paramName;
         final int i = op.path.indexOf(firstParam);
-        final String path = chompSuffix(op.path.substring(0, i - 1), "/");
+        final String path = chompSuffix(op.path.substring(0, i - 1), File.separator);
         return path;
     }
 
@@ -591,7 +592,7 @@ public class ScalaCaskCodegen extends AbstractScalaCodegen {
      * @param op
      * @return
      */
-    private static String enrichResponseType(CodegenOperation op) {
+    static String enrichResponseType(CodegenOperation op) {
         if (op.returnType != null && !op.returnType.isEmpty()) {
             return "ServiceResponse[" + op.returnType + "]";
         }
@@ -620,12 +621,12 @@ public class ScalaCaskCodegen extends AbstractScalaCodegen {
      * @return
      */
     private static String pathWithBracketPlaceholdersRemovedAndXPathIndexAdded(CodegenOperation op) {
-        String[] items = op.path.split("/", -1);
+        String[] items = op.path.split(File.separator, -1);
         String scalaPath = "";
         for (int i = 0; i < items.length; ++i) {
             final String nextPart = hasBrackets(items[i]) ? ":" + chompBrackets(items[i]) : items[i];
             if (i != items.length - 1) {
-                scalaPath = scalaPath + nextPart + "/";
+                scalaPath = scalaPath + nextPart + File.separator;
             } else {
                 scalaPath = scalaPath + nextPart;
             }
@@ -648,7 +649,7 @@ public class ScalaCaskCodegen extends AbstractScalaCodegen {
      * @return a list of both the path and query parameters as typed arguments (e.g. "aPathArg : Int, request: cask.Request, aQueryArg : Option[Long]")
      */
     private static String routeArgs(CodegenOperation op) {
-        final Stream<String> pathParamNames = Arrays.stream(op.path.split("/", -1)).filter(p -> hasBrackets(p)).map(p -> {
+        final Stream<String> pathParamNames = Arrays.stream(op.path.split(File.separator, -1)).filter(p -> hasBrackets(p)).map(p -> {
             final CodegenParameter param = pathParamForName(op, chompBrackets(p));
             param.vendorExtensions.put("x-debug", inComment(pretty(param)));
             return param.paramName + " : " + asScalaDataType(param);
