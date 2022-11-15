@@ -29,7 +29,7 @@ public class CrossClientCodegenTest extends AbstractCodegenTest {
             .setLang("scala-cross-client")
             .setSkipOverwrite(false)
             .setApiPackage("the.api.packg")
-            .setModelNamePrefix("Model")
+//            .setModelNamePrefix("Model")
             .setInvokerPackage("in.voker.pckg")
             .setInputSpecURL("src/test/resources/3_0_0/petstore.yaml")
             .setOutputDir(output.getAbsolutePath());
