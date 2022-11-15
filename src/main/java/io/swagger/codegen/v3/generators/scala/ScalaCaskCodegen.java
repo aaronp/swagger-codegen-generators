@@ -468,10 +468,6 @@ public class ScalaCaskCodegen extends AbstractScalaCodegen {
         }
     }
 
-    public static class QueryParam {
-
-    }
-
     static List<OperationGroup> group(List<CodegenOperation> operationList) {
         Map<String, OperationGroup> groupedByPrefix = new HashMap<>();
         operationList.forEach(op -> {
@@ -672,7 +668,7 @@ public class ScalaCaskCodegen extends AbstractScalaCodegen {
         return pathList.isEmpty() ? "" : (String.join(", ", pathList));
     }
 
-    private static String defaultValue(CodegenParameter p) {
+    static String defaultValue(CodegenParameter p) {
         if (!p.required && !(p.getIsListContainer() || p.getIsMapContainer())) {
             return "None";
         }
