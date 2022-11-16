@@ -1,24 +1,8 @@
 {{>licenseInfo}}
 
-package {{apiPackage}}
+package {{modelPackage}}
 
 {{#imports}}import _root_.{{import}}
 {{/imports}}
 
-trait {{classname}}JVMClient {
-{{#operations}}
-{{#operation}}
-  /** {{summary}}
-   * {{description}}
-   * parameters:
-{{#params}}
-   * @{{paramName}} : {{dataType}}
-{{/params}}
-   * @return {{returnType}}
-   */
-  def {{operationId}}() = {
-    ???
-  }
-{{/operation}}
-{{/operations}}
-}
+trait {{classname}}JVMClient extends {{classname}}Client

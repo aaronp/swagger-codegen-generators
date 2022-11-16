@@ -97,12 +97,13 @@ public class CrossClientCodegen extends AbstractScalaCodegen {
         apiPackage = env("API_PACKAGE", orElse(apiPackage, basePackage + ".server.api"));
         modelPackage = env("MODEL_PACKAGE", orElse(modelPackage, basePackage + ".server.model"));
 
-//        final String sourceDir = ensureSuffix(env("SCALA_SRC", orElse(sourceFolder, "src/main/scala/")), File.separator);
         final String appPackage = env("APP_PACKAGE", basePackage);
-        final String appPath = appPackage.replace('.', '/');
-        final String modelPath = "client/shared/src/main/scala/" + appPath;
-        final String jsClientPath = "client/js/src/main/scala/" + appPath;
-        final String jvmClientPath = "client/jvm/src/main/scala/" + appPath;
+        final String apiPath = apiPackage.replace('.', '/');
+        final String modelPath = modelPackage.replace('.', '/');
+        final String sharedApiPath = "client/shared/src/main/scala/" + apiPath;
+        final String sharedModelPath = "client/shared/src/main/scala/" + modelPath;
+        final String jsClientPath = "client/js/src/main/scala/" + apiPath;
+        final String jvmClientPath = "client/jvm/src/main/scala/" + apiPath;
 
 
         {
@@ -140,11 +141,7 @@ public class CrossClientCodegen extends AbstractScalaCodegen {
         additionalProperties.putIfAbsent(CodegenConstants.ARTIFACT_ID, artifactId);
         additionalProperties.putIfAbsent(CodegenConstants.ARTIFACT_VERSION, artifactVersion);
         additionalProperties.putIfAbsent(CodegenConstants.PACKAGE_NAME, basePackage);
-        Object oldSrc = additionalProperties.get(CodegenConstants.SOURCE_FOLDER);
-        if (oldSrc != null) {
-            System.out.println("WARNING: replacing " + oldSrc + " '' with " + modelPath);
-        }
-        additionalProperties.put(CodegenConstants.SOURCE_FOLDER, modelPath);
+        additionalProperties.put(CodegenConstants.SOURCE_FOLDER, sharedModelPath);
 
         supportingFiles.add(new SupportingFile("README.mustache", "README.md"));
 
@@ -157,9 +154,16 @@ public class CrossClientCodegen extends AbstractScalaCodegen {
         supportingFiles.add(new SupportingFile("gitignore.mustache", ".gitignore"));
         supportingFiles.add(new SupportingFile("project/build.properties", "project", "build.properties"));
         supportingFiles.add(new SupportingFile("project/plugins.sbt", "project", "plugins.sbt"));
+
         supportingFiles.add(new SupportingFile("jvmClient.mustache", jvmClientPath, "JVMClient.scala"));
         supportingFiles.add(new SupportingFile("jsClient.mustache", jsClientPath, "JSClient.scala"));
-        supportingFiles.add(new SupportingFile("commonClient.mustache", modelPath, "Client.scala"));
+
+        supportingFiles.add(new SupportingFile("apiPackage.mustache", sharedApiPath, "package.scala"));
+        supportingFiles.add(new SupportingFile("http.mustache", sharedApiPath, "http.scala"));
+        supportingFiles.add(new SupportingFile("client.mustache", sharedApiPath, "Client.scala"));
+
+        supportingFiles.add(new SupportingFile("modelPackage.mustache", sharedModelPath, "package.scala"));
+
 
         instantiationTypes.put("array", "Seq");
         instantiationTypes.put("map", "Map");
@@ -274,6 +278,13 @@ public class CrossClientCodegen extends AbstractScalaCodegen {
 
         final String paramList = String.join(", ", op.allParams.stream().map((p) -> p.paramName).collect(Collectors.toList()));
         op.vendorExtensions.put("x-param-list", paramList);
+
+        final String asStringTemplate = op.path.replace("{", "${");
+        op.vendorExtensions.put("path-template", asStringTemplate);
+        op.vendorExtensions.put("has-path-params", !op.pathParams.isEmpty());
+        op.vendorExtensions.put("has-query-params", !op.queryParams.isEmpty());
+        op.vendorExtensions.put("needs-path-query-separator", !op.pathParams.isEmpty() && !op.queryParams.isEmpty());
+        op.vendorExtensions.put("has-url-params", !op.pathParams.isEmpty() || !op.queryParams.isEmpty());
 
         final Stream<String> typed = op.allParams.stream().map((p) -> p.paramName + " : " + asScalaDataType(p));
         final String typedParamList = String.join(", ", typed.collect(Collectors.toList()));

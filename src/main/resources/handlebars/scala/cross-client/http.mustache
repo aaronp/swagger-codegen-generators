@@ -1,0 +1,29 @@
+{{>licenseInfo}}
+
+package {{modelPackage}}
+
+
+opaque type HttpData = Map[String, _]
+object HttpData {
+  lazy val empty        = apply()
+  def apply(): HttpData = Map.empty
+}
+
+extension (data: HttpData) {
+  def toMap: Map[String, _] = data
+}
+case class RequestData[A](
+    path: String,
+    headers: HttpData = HttpData(),
+    cookies: HttpData = HttpData(),
+    queryParams: HttpData = HttpData(),
+    body: Option[A] = None
+)
+
+enum HttpRequest[A]:
+  case Get(content: RequestData[A])
+  case Put(content: RequestData[A])
+  case Post(content: RequestData[A])
+  case Delete(content: RequestData[A])
+  case Patch(content: RequestData[A])
+  case Custom(method: String, content: RequestData[A])

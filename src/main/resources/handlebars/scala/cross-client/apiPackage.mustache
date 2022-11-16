@@ -1,0 +1,14 @@
+{{>licenseInfo}}
+
+package {{apiPackage}}
+
+extension (value: Any) {
+  def asQueryParam(listSeparator: String = ","): Option[String] = value match {
+    case null                            => None
+    case None                            => None
+    case list: Iterable[_]               => Option(list.mkString(listSeparator))
+    case str: String if str.trim.isEmpty => None
+    case Some(x)                         => x.asQueryParam(listSeparator)
+    case other                           => Option(other.toString)
+  }
+}

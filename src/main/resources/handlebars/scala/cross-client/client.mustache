@@ -1,0 +1,51 @@
+{{>licenseInfo}}
+
+package {{modelPackage}}
+
+{{#imports}}import _root_.{{import}}
+{{/imports}}
+
+object {{classname}}Client {
+{{#operations}}
+    {{#operation}}
+        {{#vendorExtensions.has-url-params}}
+        def {{operationId}}Url({{#pathParams}}{{paramName}} : {{dataType}}{{#hasMore}},{{/hasMore}}{{/pathParams}}{{#vendorExtensions.needs-path-query-separator}}, {{/vendorExtensions.needs-path-query-separator}}{{#queryParams}}{{paramName}} : {{dataType}}{{#hasMore}},{{/hasMore}}{{/queryParams}}) = {
+            {{#vendorExtensions.has-query-params}}
+                val {{operationId}}Url = s"{{vendorExtensions.path-template}}"
+                val {{operationId}}QueryParams = Map({{#queryParams}}"{{paramName}}" -> {{paramName}}.asQueryParam{{#hasMore}}, {{/hasMore}}{{/queryParams}}).collect {
+                case (name, Some(value)) => s"$name=$value"
+                }
+                if {{operationId}}QueryParams.isEmpty then {{operationId}}Url else {
+                {{operationId}}QueryParams.mkString({{operationId}}Url + "?", "&", "")
+                }
+            {{/vendorExtensions.has-query-params}}
+            {{^vendorExtensions.has-query-params}}
+                s"{{vendorExtensions.path-template}}"
+            {{/vendorExtensions.has-query-params}}
+        }
+        {{/vendorExtensions.has-url-params}}
+        {{^vendorExtensions.has-url-params}}
+        def {{operationId}}Url = "{{vendorExtensions.path-template}}"
+        {{/vendorExtensions.has-url-params}}
+    {{/operation}}
+{{/operations}}
+}
+trait {{classname}}Client {
+{{#operations}}
+    {{#operation}}
+        /** {{summary}}
+        * {{description}}
+        * parameters:
+        {{#allParams}}
+            * @{{paramName}} : {{dataType}} - {{hasMore}}
+        {{/allParams}}
+        * @return {{returnType}}
+        */
+        def {{operationId}}({{#allParams}}{{paramName}} : {{dataType}}{{#hasMore}},{{/hasMore}}{{/allParams}}) = {
+        ???
+        }
+    {{/operation}}
+{{/operations}}
+}
+
+
