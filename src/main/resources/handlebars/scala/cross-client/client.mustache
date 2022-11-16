@@ -10,14 +10,15 @@ object {{classname}}Client {
     {{#operation}}
         {{#vendorExtensions.has-url-params}}
         def {{operationId}}Url({{#pathParams}}{{paramName}} : {{dataType}}{{#hasMore}},{{/hasMore}}{{/pathParams}}{{#vendorExtensions.needs-path-query-separator}}, {{/vendorExtensions.needs-path-query-separator}}{{#queryParams}}{{paramName}} : {{dataType}}{{#hasMore}},{{/hasMore}}{{/queryParams}}) = {
+
             {{#vendorExtensions.has-query-params}}
                 val {{operationId}}Url = s"{{vendorExtensions.path-template}}"
-                val {{operationId}}QueryParams = Map({{#queryParams}}"{{paramName}}" -> {{paramName}}.asQueryParam{{#hasMore}}, {{/hasMore}}{{/queryParams}}).collect {
-                case (name, Some(value)) => s"$name=$value"
+                val {{operationId}}QueryParams = Map({{#queryParams}}"{{paramName}}" -> {{paramName}}.asQueryParam(){{#hasMore}}, {{/hasMore}}{{/queryParams}}).collect {
+                  case (name, Some(value)) => s"$name=$value"
                 }
-                if {{operationId}}QueryParams.isEmpty then {{operationId}}Url else {
-                {{operationId}}QueryParams.mkString({{operationId}}Url + "?", "&", "")
-                }
+                //if {{operationId}}QueryParams.isEmpty then {{operationId}}Url else {
+                //{{operationId}}QueryParams.mkString({{operationId}}Url + "?", "&", "")
+                //}
             {{/vendorExtensions.has-query-params}}
             {{^vendorExtensions.has-query-params}}
                 s"{{vendorExtensions.path-template}}"
@@ -42,7 +43,13 @@ trait {{classname}}Client {
         * @return {{returnType}}
         */
         def {{operationId}}({{#allParams}}{{paramName}} : {{dataType}}{{#hasMore}},{{/hasMore}}{{/allParams}}) = {
-        ???
+            RequestData(
+                path = s"{{vendorExtensions.path-template}}",
+                headers = HttpData({{#headerParams}}"{{paramName}}" -> {{paramName}}{{#hasMore}}, {{/hasMore}}{{/headerParams}}),
+                cookies = HttpData({{#cookieParams}}"{{paramName}}" -> {{paramName}}{{#hasMore}}, {{/hasMore}}{{/cookieParams}}),
+                queryParams = HttpData({{#queryParams}}"{{paramName}}" -> {{paramName}}{{#hasMore}}, {{/hasMore}}{{/queryParams}}),
+                body = {{#vendorExtensions.has-body-param}}Option({{bodyParam.paramName}}){{else}}None{{/vendorExtensions.has-body-param}}
+            )
         }
     {{/operation}}
 {{/operations}}

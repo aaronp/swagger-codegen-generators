@@ -5,8 +5,7 @@ package {{modelPackage}}
 
 opaque type HttpData = Map[String, _]
 object HttpData {
-  lazy val empty        = apply()
-  def apply(): HttpData = Map.empty
+  def apply(pears : (String, _)*): HttpData = pears.toMap
 }
 
 extension (data: HttpData) {

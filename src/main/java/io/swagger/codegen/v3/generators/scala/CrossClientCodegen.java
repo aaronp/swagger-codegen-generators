@@ -164,7 +164,6 @@ public class CrossClientCodegen extends AbstractScalaCodegen {
 
         supportingFiles.add(new SupportingFile("modelPackage.mustache", sharedModelPath, "package.scala"));
 
-
         instantiationTypes.put("array", "Seq");
         instantiationTypes.put("map", "Map");
     }
@@ -271,6 +270,11 @@ public class CrossClientCodegen extends AbstractScalaCodegen {
             p.vendorExtensions.put("x-consumes-xml", consumesMimetype(op, "application/xml"));
             p.vendorExtensions.put("x-consumes-binary", consumesMimetype(op, "application/octet-stream"));
         });
+
+        op.vendorExtensions.put("has-body-param", op.bodyParam != null);
+        if (op.bodyParam != null) {
+
+        }
 
         /** put in 'x-container-type' to help with unmarshalling from json */
         op.allParams.forEach((p) -> p.vendorExtensions.put("x-container-type", containerType(p.dataType)));
