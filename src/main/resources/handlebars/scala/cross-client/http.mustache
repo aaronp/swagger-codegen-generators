@@ -27,3 +27,6 @@ enum HttpRequest[A]:
   case Delete(content: RequestData[A])
   case Patch(content: RequestData[A])
   case Custom(method: String, content: RequestData[A])
+
+  def content: RequestData[A]
+  def url: String = content.path

@@ -1,8 +1,12 @@
 {{>licenseInfo}}
-
 package {{modelPackage}}
 
 {{#imports}}import _root_.{{import}}
 {{/imports}}
 
-trait {{classname}}JVMClient extends {{classname}}Client
+extension [A](request: HttpRequest[A]) {
+    def asRequest(hostPort: String) = requests.Request(
+        request.content.path
+    )
+}
+
