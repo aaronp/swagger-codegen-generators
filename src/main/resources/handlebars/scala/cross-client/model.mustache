@@ -15,22 +15,20 @@ case class {{classname}}(
 /* {{{description}}} */
   {{/description}}
   {{{name}}}: {{^required}}Option[{{/required}}{{datatype}}{{^required}}]{{/required}}{{#hasMore}},{{/hasMore}}
-  {{/vars}}) {
+  {{/vars}}):
+    def asJsonString = write(this)
+    def asJson = writeJs(this)
+    def asMsg: Msg = writeMsg(this)
+end {{classname}}
 
-  def asJson = write(this)
-
-}
-
-object {{classname}}{
+object {{classname}}:
   implicit val rw: RW[{{classname}}] = macroRW
 
   def fromJsonString(jason : String) : {{classname}} = read[{{classname}}](jason)
-
+  def fromBinary(message: Array[Byte]): {{classname}} = readBinary[{{classname}}](message)
   def manyFromJsonString(jason : String) : List[{{classname}}] = read[List[{{classname}}]](jason)
-
   def mapFromJsonString(jason : String) : Map[String, {{classname}}] = read[Map[String, {{classname}}]](jason)
-
-}
+end {{classname}}
 
 {{/model}}
 {{/models}}
