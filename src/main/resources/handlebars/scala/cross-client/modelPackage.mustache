@@ -8,13 +8,28 @@ import java.time.*
 import java.time.format.DateTimeFormatter
 
 given ReadWriter[ZonedDateTime] = readwriter[String].bimap[ZonedDateTime](
-zonedDateTime => DateTimeFormatter.ISO_INSTANT.format(zonedDateTime),
-str => ZonedDateTime.parse(str, DateTimeFormatter.ISO_INSTANT))
+  zonedDateTime => DateTimeFormatter.ISO_INSTANT.format(zonedDateTime),
+  str => ZonedDateTime.parse(str, DateTimeFormatter.ISO_INSTANT))
 
 given ReadWriter[LocalDateTime] = readwriter[String].bimap[LocalDateTime](
-zonedDateTime => DateTimeFormatter.ISO_INSTANT.format(zonedDateTime),
-str => LocalDateTime.parse(str, DateTimeFormatter.ISO_INSTANT))
+  zonedDateTime => DateTimeFormatter.ISO_INSTANT.format(zonedDateTime),
+  str => LocalDateTime.parse(str, DateTimeFormatter.ISO_INSTANT))
 
 given ReadWriter[LocalDate] = readwriter[String].bimap[LocalDate](
-zonedDateTime => DateTimeFormatter.ISO_INSTANT.format(zonedDateTime),
-str => LocalDate.parse(str, DateTimeFormatter.ISO_INSTANT))
+  zonedDateTime => DateTimeFormatter.ISO_INSTANT.format(zonedDateTime),
+  str => LocalDate.parse(str, DateTimeFormatter.ISO_INSTANT))
+
+trait Read[-A, +R]:
+    def read(input: A): R
+object Read:
+    def apply[A,R](f : A => R) = new Read[A,R] {
+        override def read(input: A): R = f(input)
+    }
+
+trait Write[-A, +R]:
+    def write(input: A): R
+
+object Write:
+    def apply[A,R](f : A => R) = new Write[A,R] {
+        override def write(input: A): R = f(input)
+    }

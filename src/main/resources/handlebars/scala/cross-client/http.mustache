@@ -15,6 +15,7 @@ case class RequestData[A](
     path: String,
     headers: HttpData = HttpData(),
     cookies: HttpData = HttpData(),
+    formData: HttpData = HttpData(),
     queryParams: HttpData = HttpData(),
     body: Option[A] = None
 )

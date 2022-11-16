@@ -17,12 +17,26 @@ case class {{classname}}(
   {{{name}}}: {{^required}}Option[{{/required}}{{datatype}}{{^required}}]{{/required}}{{#hasMore}},{{/hasMore}}
   {{/vars}}):
     def asJsonString = write(this)
-    def asJson = writeJs(this)
-    def asMsg: Msg = writeMsg(this)
+    def asJson       = writeJs(this)
+    def asMsg        = writeMsg(this)
 end {{classname}}
 
 object {{classname}}:
-  implicit val rw: RW[{{classname}}] = macroRW
+  given rw: RW[{{classname}}] = macroRW
+
+    given Write[{{classname}}, ujson.Value] with {
+        def write(input: {{classname}}) = input.asJson
+    }
+    given Read[ujson.Value, {{classname}}] with {
+        def read(input: ujson.Value) = upickle.default.read[{{classname}}](input)
+    }
+
+    given Write[{{classname}}, Array[Byte]] with {
+        def write(input: {{classname}}) = input.asMsg.binary
+    }
+    given Read[Array[Byte], {{classname}}] with {
+        def read(input: Array[Byte]) = fromBinary(input)
+    }
 
   def fromJsonString(jason : String) : {{classname}} = read[{{classname}}](jason)
   def fromBinary(message: Array[Byte]): {{classname}} = readBinary[{{classname}}](message)

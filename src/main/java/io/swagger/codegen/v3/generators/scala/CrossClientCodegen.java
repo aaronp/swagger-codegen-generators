@@ -1,5 +1,6 @@
 package io.swagger.codegen.v3.generators.scala;
 
+import com.google.common.collect.ImmutableSet;
 import io.swagger.codegen.v3.*;
 
 import java.io.File;
@@ -7,6 +8,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static io.swagger.codegen.v3.generators.scala.ScalaCaskCodegen.capitalise;
 import static io.swagger.codegen.v3.generators.scala.ScalaCaskCodegen.consumesMimetype;
 
 public class CrossClientCodegen extends AbstractScalaCodegen {
@@ -246,9 +248,17 @@ public class CrossClientCodegen extends AbstractScalaCodegen {
         return objs;
     }
 
+    private static Set<String> recognizedHttpMethods = ImmutableSet.of("get", "post", "put", "delete", "patch");
+
     private static void postProcessOperation(CodegenOperation op) {
         // force http method to lower case
         op.httpMethod = op.httpMethod.toLowerCase();
+
+        if (recognizedHttpMethods.contains(op.httpMethod)) {
+            op.vendorExtensions.put("HttpRequestInstance", capitalise(op.httpMethod));
+        } else {
+            op.vendorExtensions.put("HttpRequestInstance", "Other(\"" + op.httpMethod + "\", ");
+        }
 
         op.vendorExtensions.put("x-debug", ScalaCaskCodegen.inComment(pretty(op)));
         op.allParams.forEach(p -> p.vendorExtensions.put("x-debug", ScalaCaskCodegen.inComment(pretty(p))));
