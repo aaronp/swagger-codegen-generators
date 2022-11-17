@@ -29,6 +29,7 @@ public class CrossClientCodegen extends AbstractScalaCodegen {
         embeddedTemplateDir = "cross-client";
 
         modelTemplateFiles.put("model.mustache", ".scala");
+        modelTestTemplateFiles.put("modelTest.mustache", ".scala");
         reservedWordsMappings.put("package", "pckg");
 
         setReservedWordsLowerCase(
@@ -98,6 +99,7 @@ public class CrossClientCodegen extends AbstractScalaCodegen {
         infoEmail = env("INFO_EMAIL", "apiteam@swagger.io");
         apiPackage = env("API_PACKAGE", orElse(apiPackage, basePackage + ".server.api"));
         modelPackage = env("MODEL_PACKAGE", orElse(modelPackage, basePackage + ".server.model"));
+        testPackage = basePackage;
 
         final String appPackage = env("APP_PACKAGE", basePackage);
         final String apiPath = apiPackage.replace('.', '/');
@@ -174,6 +176,10 @@ public class CrossClientCodegen extends AbstractScalaCodegen {
     public String modelFileFolder() {
         Object src = additionalProperties.get(CodegenConstants.SOURCE_FOLDER);
         return outputFolder + File.separator + src;
+    }
+    @Override
+    public String modelTestFileFolder() {
+        return modelFileFolder().replace("/main/", "/test/");
     }
 
     @Override

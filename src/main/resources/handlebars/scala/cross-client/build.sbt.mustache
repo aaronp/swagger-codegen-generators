@@ -3,6 +3,8 @@ ThisBuild / scalaVersion := "3.2.1"
 
 ThisBuild / scalafmtOnCompile := true
 
+ThisBuild / testFrameworks += new TestFramework("utest.runner.Framework")
+
 // see https://github.com/portable-scala/sbt-crossproject
 lazy val client = crossProject(JSPlatform, JVMPlatform)
   .crossType(CrossType.Full)
@@ -10,8 +12,10 @@ lazy val client = crossProject(JSPlatform, JVMPlatform)
   .in(file("client"))
   .settings(name := "client")
   .settings(libraryDependencies += "com.lihaoyi" %%% "upickle" % "2.0.0")
+  .settings(libraryDependencies += "com.lihaoyi" %%% "utest" % "0.8.1" % "test")
   .jvmSettings(name := "client-jvm")
-  .settings(libraryDependencies += "com.lihaoyi" %% "requests" % "0.7.1")
+  .jvmSettings(libraryDependencies += "com.lihaoyi" %% "requests" % "0.7.1")
+  .jvmSettings(libraryDependencies += "org.scalacheck" %%% "scalacheck" % "1.17.0")
   .jsSettings(scalaJSUseMainModuleInitializer in Global := true)
   .jsSettings(name := "client-js")
   .jsSettings(test := {}) // ignore JS tests - they're all done on the JVM
