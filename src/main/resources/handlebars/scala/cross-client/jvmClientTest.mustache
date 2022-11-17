@@ -1,0 +1,17 @@
+{{>licenseInfo}}
+package {{modelPackage}}
+
+{{#imports}}import _root_.{{import}}
+{{/imports}}
+
+import utest._
+import org.scalacheck.*
+import Arbitrary.arbitrary
+
+object {{classname}}JVMClientTest extends TestSuite {
+    val tests = Tests{
+        test("test1"){
+
+        }
+    }
+}

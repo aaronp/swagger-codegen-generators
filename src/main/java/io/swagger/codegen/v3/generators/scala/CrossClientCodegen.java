@@ -30,6 +30,7 @@ public class CrossClientCodegen extends AbstractScalaCodegen {
 
         modelTemplateFiles.put("model.mustache", ".scala");
         modelTestTemplateFiles.put("modelTest.mustache", ".scala");
+        apiTestTemplateFiles.put("jvmClientTest.mustache", "JVMClientTest.scala");
         reservedWordsMappings.put("package", "pckg");
 
         setReservedWordsLowerCase(
@@ -178,8 +179,16 @@ public class CrossClientCodegen extends AbstractScalaCodegen {
         return outputFolder + File.separator + src;
     }
     @Override
+    public String apiFileFolder() {
+        return modelFileFolder().replace("/shared/", "/jvm/");
+    }
+    @Override
     public String modelTestFileFolder() {
         return modelFileFolder().replace("/main/", "/test/");
+    }
+    @Override
+    public String apiTestFileFolder() {
+        return apiFileFolder().replace("/main/", "/test/");
     }
 
     @Override
