@@ -1,5 +1,6 @@
 package io.swagger.codegen.v3.generators.scala;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import io.swagger.codegen.v3.*;
 
@@ -30,7 +31,7 @@ public class CrossClientCodegen extends AbstractScalaCodegen {
 
         modelTemplateFiles.put("model.mustache", ".scala");
         modelTestTemplateFiles.put("modelTest.mustache", ".scala");
-        apiTestTemplateFiles.put("jvmClientTest.mustache", "JVMClientTest.scala");
+        apiTestTemplateFiles.put("jvmClientTest.mustache", "ClientTest.scala");
         reservedWordsMappings.put("package", "pckg");
 
         setReservedWordsLowerCase(
@@ -178,14 +179,17 @@ public class CrossClientCodegen extends AbstractScalaCodegen {
         Object src = additionalProperties.get(CodegenConstants.SOURCE_FOLDER);
         return outputFolder + File.separator + src;
     }
+
     @Override
     public String apiFileFolder() {
         return modelFileFolder().replace("/shared/", "/jvm/");
     }
+
     @Override
     public String modelTestFileFolder() {
         return modelFileFolder().replace("/main/", "/test/");
     }
+
     @Override
     public String apiTestFileFolder() {
         return apiFileFolder().replace("/main/", "/test/");
@@ -297,9 +301,6 @@ public class CrossClientCodegen extends AbstractScalaCodegen {
         });
 
         op.vendorExtensions.put("has-body-param", op.bodyParam != null);
-        if (op.bodyParam != null) {
-
-        }
 
         /** put in 'x-container-type' to help with unmarshalling from json */
         op.allParams.forEach((p) -> p.vendorExtensions.put("x-container-type", containerType(p.dataType)));
@@ -318,6 +319,11 @@ public class CrossClientCodegen extends AbstractScalaCodegen {
         final Stream<String> typed = op.allParams.stream().map((p) -> p.paramName + " : " + asScalaDataType(p));
         final String typedParamList = String.join(", ", typed.collect(Collectors.toList()));
         op.vendorExtensions.put("x-param-list-typed", typedParamList);
+
+
+        final List<String> examples = op.examples == null ? Collections.emptyList() : op.examples.stream().filter(x -> x != null)
+            .map(x -> ScalaCaskCodegen.formatMap(x)).collect(Collectors.toList());
+        op.vendorExtensions.put("example-list", ImmutableMap.of("asMap", examples));
 
 
         // for the declaration site

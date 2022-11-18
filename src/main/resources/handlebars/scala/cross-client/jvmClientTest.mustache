@@ -8,10 +8,16 @@ import utest._
 import org.scalacheck.*
 import Arbitrary.arbitrary
 
-object {{classname}}JVMClientTest extends TestSuite {
+object {{classname}}ClientTest extends TestSuite {
     val tests = Tests{
-        test("test1"){
 
+{{#example-list.example-list}}
+        test("client test"){
+// Example:
+/*
+{{asMap}}
+*/
         }
+{{/example-list.example-list}}
     }
 }
