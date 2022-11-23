@@ -377,7 +377,12 @@ public class CrossClientCodegen extends AbstractScalaCodegen {
 
         op.vendorExtensions.put("x-response-type", ScalaCaskCodegen.enrichResponseType(op));
 
+        // operations can return various encodings (json, xml) per response type (one for 200, one for 400)
+        // the 'responseTypes' returns a union type of all the responses for a particular operation
         op.vendorExtensions.put("responseTypes", responseTypes(op));
+
+        // how should the client encode the request body? just choose the first one
+        op.vendorExtensions.put("defaultContentType", defaultContentType(op));
 
         String responseDebug = String.join("\n\n - - - - - - -\n\n", op.responses.stream().map(r -> ScalaCaskCodegen.inComment(pretty(r))).collect(Collectors.toList()));
         op.vendorExtensions.put("x-responses", responseDebug);
@@ -397,6 +402,23 @@ public class CrossClientCodegen extends AbstractScalaCodegen {
             }
         }).collect(Collectors.toSet());
         return String.join(" | ", responseTypes);
+    }
+
+    static String defaultContentType(final CodegenOperation op) {
+        String defaultVal = "application/json";
+        // doesn't matter - there isn't a body param
+        if (op.bodyParam == null || op.contents == null || contentTypes(op).anyMatch(c -> c.startsWith(defaultVal))) {
+            return defaultVal;
+        }
+
+        return contentTypes(op).findFirst().orElse(defaultVal);
+    }
+
+    private static Stream<String> contentTypes(CodegenOperation op) {
+        if (op.contents == null) {
+            return Stream.empty();
+        }
+        return op.contents.stream().map(c -> c.getContentType()).filter(c -> !StringUtils.isEmpty(c)).map(c -> c.toLowerCase());
     }
 
     private static String queryArgs(final CodegenOperation op) {

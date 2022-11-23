@@ -7,6 +7,9 @@ opaque type ContentType = String
 
 object ContentType:
   def apply(contentType : String) : ContentType = contentType.trim().toLowerCase()
+  val `application/json` :  ContentType = "application/json"
+  val `application/xml` :  ContentType = "application/xml"
+  val `text/plain` :  ContentType = "text/plain"
 end ContentType
 
 
@@ -14,6 +17,8 @@ end ContentType
 case class ResponseCoords(statusCode : Int, contentType : ContentType)
 
 type Unmarshal[A] = ResponseCoords => Try[A]
+
+type Marshal[A] = ContentType => A => Binary
 
 opaque type HttpData = Map[String, _]
 object HttpData {

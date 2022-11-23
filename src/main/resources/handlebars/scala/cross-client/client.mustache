@@ -21,13 +21,16 @@ trait {{classFilename}}Client[F[_] : cats.Functor](transport : HttpRequest[Binar
     {{#operation}}
 
         final def {{operationId}}AsRequest({{#allParams}}{{paramName}} : {{dataType}}{{#hasMore}},{{/hasMore}}{{/allParams}}) : HttpRequest.{{{vendorExtensions.HttpRequestInstance}}}[Binary] = {
+            {{#hasBodyParam}}
+                val {{operationId}}PayloadBytes = {{operationId}}AsBinary(ContentType.`{{{vendorExtensions.defaultContentType}}}`)({{bodyParam.paramName}})
+            {{/hasBodyParam}}
             HttpRequest.{{{vendorExtensions.HttpRequestInstance}}}(RequestData(
             path = s"{{vendorExtensions.path-template}}",
             headers = HttpData({{#headerParams}}"{{paramName}}" -> {{paramName}}{{#hasMore}}, {{/hasMore}}{{/headerParams}}),
             cookies = HttpData({{#cookieParams}}"{{paramName}}" -> {{paramName}}{{#hasMore}}, {{/hasMore}}{{/cookieParams}}),
             formData = HttpData({{#formParams}}"{{paramName}}" -> {{paramName}}{{#hasMore}}, {{/hasMore}}{{/formParams}}),
             queryParams = HttpData({{#queryParams}}"{{paramName}}" -> {{paramName}}{{#hasMore}}, {{/hasMore}}{{/queryParams}}),
-            body = {{#vendorExtensions.has-body-param}}Option({{bodyParam.paramName}}){{else}}None{{/vendorExtensions.has-body-param}}
+            body = {{#hasBodyParam}}Option({{operationId}}PayloadBytes){{else}}None{{/hasBodyParam}}
             ))
         }
 
@@ -36,6 +39,10 @@ trait {{classFilename}}Client[F[_] : cats.Functor](transport : HttpRequest[Binar
          * which can be supplied/overridden in subclasses
          */
         final def {{{operationId}}}AsResponse : Unmarshal[{{{operationIdCamelCase}}}Response] = {{>clientResponseMap}}
+
+        {{#hasBodyParam}}
+        final def {{{operationId}}}AsBinary : Marshal[{{{operationIdCamelCase}}}Response] = {{>clientResponseMap}}
+        {{/hasBodyParam}}
 
         /** {{summary}}
         * {{description}}
