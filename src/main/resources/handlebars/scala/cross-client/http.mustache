@@ -1,6 +1,20 @@
 {{>licenseInfo}}
 package {{apiPackage}}
 
+import scala.util.Try
+
+opaque type ContentType = String
+
+object ContentType:
+  def apply(contentType : String) : ContentType = contentType.trim().toLowerCase()
+end ContentType
+
+
+/** Serves as a key to response negotiation */
+case class ResponseCoords(statusCode : Int, contentType : ContentType)
+
+type Unmarshal[A] = ResponseCoords => Try[A]
+
 opaque type HttpData = Map[String, _]
 object HttpData {
   def apply(pears : (String, _)*): HttpData = pears.toMap
@@ -17,6 +31,12 @@ case class RequestData[A](
     queryParams: HttpData = HttpData(),
     body: Option[A] = None
 )
+
+case class ResponseData(
+    coords : ResponseCoords,
+    headers: HttpData = HttpData(),
+    cookies: HttpData = HttpData(),
+    body: Option[Binary] = None)
 
 enum HttpRequest[A]:
   case Get(content: RequestData[A])

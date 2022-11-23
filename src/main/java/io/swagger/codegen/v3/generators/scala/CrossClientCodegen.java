@@ -3,6 +3,7 @@ package io.swagger.codegen.v3.generators.scala;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import io.swagger.codegen.v3.*;
+import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
 import java.util.*;
@@ -16,12 +17,28 @@ public class CrossClientCodegen extends AbstractScalaCodegen {
 
     static boolean debug = Boolean.parseBoolean(env("DEBUG", "false"));
 
+    private static enum Platform {
+        JVM,
+        JS,
+        SHARED
+    }
+
     private String groupId;
     private String artifactId;
     private String basePackage;
     private String artifactVersion;
     private String appName;
     private String infoEmail;
+
+    private String appPackage;
+    private String apiPath;
+    private String modelPath;
+    private String sharedApiPath;
+    private String sharedModelPath;
+    private String jsClientPath;
+    private String jvmClientPath;
+
+    private static String SharedClientTemplateFile = "client.mustache";
 
     public CrossClientCodegen() {
         super();
@@ -103,13 +120,13 @@ public class CrossClientCodegen extends AbstractScalaCodegen {
         modelPackage = env("MODEL_PACKAGE", orElse(modelPackage, basePackage + ".server.model"));
         testPackage = basePackage;
 
-        final String appPackage = env("APP_PACKAGE", basePackage);
-        final String apiPath = apiPackage.replace('.', '/');
-        final String modelPath = modelPackage.replace('.', '/');
-        final String sharedApiPath = "client/shared/src/main/scala/" + apiPath;
-        final String sharedModelPath = "client/shared/src/main/scala/" + modelPath;
-        final String jsClientPath = "client/js/src/main/scala/" + apiPath;
-        final String jvmClientPath = "client/jvm/src/main/scala/" + apiPath;
+        appPackage = env("APP_PACKAGE", basePackage);
+        apiPath = apiPackage.replace('.', '/');
+        modelPath = modelPackage.replace('.', '/');
+        sharedApiPath = "client/shared/src/main/scala/" + apiPath;
+        sharedModelPath = "client/shared/src/main/scala/" + modelPath;
+        jsClientPath = "client/js/src/main/scala/" + apiPath;
+        jvmClientPath = "client/jvm/src/main/scala/" + apiPath;
 
 
         {
@@ -147,13 +164,16 @@ public class CrossClientCodegen extends AbstractScalaCodegen {
         additionalProperties.putIfAbsent(CodegenConstants.ARTIFACT_ID, artifactId);
         additionalProperties.putIfAbsent(CodegenConstants.ARTIFACT_VERSION, artifactVersion);
         additionalProperties.putIfAbsent(CodegenConstants.PACKAGE_NAME, basePackage);
+
+        // we have different source directories for cross-client builds. here we treat 'model' as the shared source folder
         additionalProperties.put(CodegenConstants.SOURCE_FOLDER, sharedModelPath);
+
+        apiTemplateFiles.put(SharedClientTemplateFile, "Client.scala");
 
         supportingFiles.add(new SupportingFile("README.mustache", "README.md"));
 
         // TODO - put this back in when you're done developing @Aaron
         supportingFiles.add(new SupportingFile(".swagger-codegen-ignore", ".swagger-codegen-ignore--todo-put-this-back"));
-
 
         supportingFiles.add(new SupportingFile("build.sbt.mustache", "build.sbt"));
         supportingFiles.add(new SupportingFile(".scalafmt.conf.mustache", ".scalafmt.conf"));
@@ -166,7 +186,7 @@ public class CrossClientCodegen extends AbstractScalaCodegen {
 
         supportingFiles.add(new SupportingFile("apiPackage.mustache", sharedApiPath, "package.scala"));
         supportingFiles.add(new SupportingFile("http.mustache", sharedApiPath, "http.scala"));
-        supportingFiles.add(new SupportingFile("client.mustache", sharedApiPath, "Client.scala"));
+
 
         supportingFiles.add(new SupportingFile("modelPackage.mustache", sharedModelPath, "package.scala"));
 
@@ -182,7 +202,24 @@ public class CrossClientCodegen extends AbstractScalaCodegen {
 
     @Override
     public String apiFileFolder() {
-        return modelFileFolder().replace("/shared/", "/jvm/");
+        return apiFileFolderForPlatform(sharedModelPath, Platform.JVM);
+    }
+
+    public String apiFileFolderForPlatform(String folder, Platform platform) {
+//        String folder;
+//        switch(platform) {
+//            case JS :
+//                folder = modelFileFolder();
+//            break;
+//            case JVM :
+//                folder = k();
+//                break;
+//            case JS :
+//                folder = modelFileFolder();
+//                break;
+//        }
+
+        return outputFolder + File.separator + folder.replace("/shared/", "/" + platform.name().toLowerCase() + "/");
     }
 
     @Override
@@ -208,7 +245,16 @@ public class CrossClientCodegen extends AbstractScalaCodegen {
     public String apiFilename(String templateName, String tag) {
         final String suffix = apiTemplateFiles().get(templateName);
         final String fn = toApiFilename(tag);
-        return apiFileFolder() + '/' + fn + suffix;
+        Platform platform = Platform.JVM;
+        if (templateName.equals(SharedClientTemplateFile)) {
+            platform = Platform.SHARED;
+//        } else if (templateName.equals()) {
+//            platform = "shared";
+        }
+
+        final String value = apiFileFolderForPlatform(sharedApiPath, platform) + '/' + fn + suffix;
+        System.out.println("apiFileName(" + templateName + "," + tag + ") returning " + value);
+        return value;
     }
 
     @Override
@@ -330,8 +376,27 @@ public class CrossClientCodegen extends AbstractScalaCodegen {
         op.vendorExtensions.put("x-query-args", queryArgs(op));
 
         op.vendorExtensions.put("x-response-type", ScalaCaskCodegen.enrichResponseType(op));
+
+        op.vendorExtensions.put("responseTypes", responseTypes(op));
+
         String responseDebug = String.join("\n\n - - - - - - -\n\n", op.responses.stream().map(r -> ScalaCaskCodegen.inComment(pretty(r))).collect(Collectors.toList()));
         op.vendorExtensions.put("x-responses", responseDebug);
+    }
+
+    static String responseTypes(final CodegenOperation op) {
+        if (op.returnType != null && !op.returnType.isEmpty()) {
+            return op.returnType;
+        }
+        final Set<String> responseTypes = op.responses.stream().map(r -> {
+            if (!StringUtils.isEmpty(r.dataType)) {
+                return r.dataType;
+            } else if (!StringUtils.isEmpty(r.baseType)) {
+                return r.baseType;
+            } else {
+                return "Unit";
+            }
+        }).collect(Collectors.toSet());
+        return String.join(" | ", responseTypes);
     }
 
     private static String queryArgs(final CodegenOperation op) {

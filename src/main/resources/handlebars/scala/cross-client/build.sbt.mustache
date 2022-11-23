@@ -1,4 +1,6 @@
 name := "{{artifactId}}"
+organization := "{{groupId}}"
+
 ThisBuild / scalaVersion := "3.2.1"
 
 ThisBuild / scalafmtOnCompile := true
@@ -13,6 +15,7 @@ lazy val client = crossProject(JSPlatform, JVMPlatform)
   .settings(name := "client")
   .settings(libraryDependencies += "com.lihaoyi" %%% "upickle" % "2.0.0")
   .settings(libraryDependencies += "com.lihaoyi" %%% "utest" % "0.8.1" % "test")
+  .settings(libraryDependencies += "org.typelevel" %%% "cats-core" % "2.9.0")
   .jvmSettings(name := "client-jvm")
   .jvmSettings(libraryDependencies += "com.lihaoyi" %% "requests" % "0.7.1")
   .jvmSettings(libraryDependencies += "org.scalacheck" %%% "scalacheck" % "1.17.0")

@@ -2,6 +2,8 @@
 
 package {{apiPackage}}
 
+type Binary = Array[Byte]
+
 extension (value: Any) {
   def asQueryParam(listSeparator: String = ","): Option[String] = value match {
     case null                            => None

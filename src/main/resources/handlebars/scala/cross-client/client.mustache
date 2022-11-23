@@ -4,26 +4,52 @@ package {{apiPackage}}
 {{#imports}}import _root_.{{import}}
 {{/imports}}
 
-trait Client {
+import cats.syntax.functor.*
+
+object {{classFilename}}Client:
 {{#operations}}
     {{#operation}}
+        type {{{operationIdCamelCase}}}Response = {{{vendorExtensions.responseTypes}}}
+    {{/operation}}
+{{/operations}}
+end {{classFilename}}Client
+
+import {{classFilename}}Client.*
+
+trait {{classFilename}}Client[F[_] : cats.Functor](transport : HttpRequest[Binary] => F[ResponseData]) {
+{{#operations}}
+    {{#operation}}
+
+        final def {{operationId}}AsRequest({{#allParams}}{{paramName}} : {{dataType}}{{#hasMore}},{{/hasMore}}{{/allParams}}) : HttpRequest.{{{vendorExtensions.HttpRequestInstance}}}[Binary] = {
+            HttpRequest.{{{vendorExtensions.HttpRequestInstance}}}(RequestData(
+            path = s"{{vendorExtensions.path-template}}",
+            headers = HttpData({{#headerParams}}"{{paramName}}" -> {{paramName}}{{#hasMore}}, {{/hasMore}}{{/headerParams}}),
+            cookies = HttpData({{#cookieParams}}"{{paramName}}" -> {{paramName}}{{#hasMore}}, {{/hasMore}}{{/cookieParams}}),
+            formData = HttpData({{#formParams}}"{{paramName}}" -> {{paramName}}{{#hasMore}}, {{/hasMore}}{{/formParams}}),
+            queryParams = HttpData({{#queryParams}}"{{paramName}}" -> {{paramName}}{{#hasMore}}, {{/hasMore}}{{/queryParams}}),
+            body = {{#vendorExtensions.has-body-param}}Option({{bodyParam.paramName}}){{else}}None{{/vendorExtensions.has-body-param}}
+            ))
+        }
+
+        /**
+         * This maps a means to unmarshal the response by ResponseCoords (e.g. status code and content type),
+         * which can be supplied/overridden in subclasses
+         */
+        final def {{{operationId}}}AsResponse : Unmarshal[{{{operationIdCamelCase}}}Response] = {{>clientResponseMap}}
+
         /** {{summary}}
         * {{description}}
         * parameters:
         {{#allParams}}
-            * @{{paramName}} : {{dataType}} - {{hasMore}}
+        * @{{paramName}} : {{dataType}} - {{hasMore}}
         {{/allParams}}
         * @return {{returnType}}
         */
         def {{operationId}}({{#allParams}}{{paramName}} : {{dataType}}{{#hasMore}},{{/hasMore}}{{/allParams}}) = {
-            HttpRequest.{{{vendorExtensions.HttpRequestInstance}}}(RequestData(
-                path = s"{{vendorExtensions.path-template}}",
-                headers = HttpData({{#headerParams}}"{{paramName}}" -> {{paramName}}{{#hasMore}}, {{/hasMore}}{{/headerParams}}),
-                cookies = HttpData({{#cookieParams}}"{{paramName}}" -> {{paramName}}{{#hasMore}}, {{/hasMore}}{{/cookieParams}}),
-                formData = HttpData({{#formParams}}"{{paramName}}" -> {{paramName}}{{#hasMore}}, {{/hasMore}}{{/formParams}}),
-                queryParams = HttpData({{#queryParams}}"{{paramName}}" -> {{paramName}}{{#hasMore}}, {{/hasMore}}{{/queryParams}}),
-                body = {{#vendorExtensions.has-body-param}}Option({{bodyParam.paramName}}){{else}}None{{/vendorExtensions.has-body-param}}
-            ))
+            val request = {{operationId}}AsRequest({{#allParams}}{{paramName}}{{#hasMore}},{{/hasMore}}{{/allParams}})
+            transport(request).map { response =>
+                {{operationId}}AsResponse(response.coords)
+            }
         }
     {{/operation}}
 {{/operations}}

@@ -5,4 +5,29 @@ package {{modelPackage}}
 {{#imports}}import _root_.{{import}}
 {{/imports}}
 
-trait {{classname}}JSClient extends {{classname}}Client
+// title: {{{openAPI.info.title}}}
+// appName: {{{appName}}}
+
+{{#openAPI.servers}}
+ // description  : {{description}}
+ // url  : {{url}}
+{{/openAPI.servers}}
+object JSClient {
+
+{{#operations}}
+    // ===================================
+    // pathPrefix : {{pathPrefix}}
+    // package : {{package}}
+    // classname : {{classname}}
+    // ...
+{{#operation}}
+    //operationId : {{operationId}}
+{{/operation}}
+{{/operations}}
+
+  /**
+
+{{{ this }}}
+    */
+
+}

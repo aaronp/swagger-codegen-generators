@@ -4,9 +4,12 @@ package {{apiPackage}}
 {{#imports}}import _root_.{{import}}
 {{/imports}}
 
-extension [A](request: HttpRequest[A]) {
-    def asRequest(hostPort: String) = requests.Request(
-        request.content.path
-    )
-}
+object JVMClient {
 
+    extension [A](request: HttpRequest[A]) {
+        def asRequest(hostPort: String) = requests.Request(
+            request.content.path
+        )
+    }
+
+}

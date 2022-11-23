@@ -1,5 +1,6 @@
 package io.swagger.codegen.v3.generators.scala;
 
+import com.google.common.collect.ImmutableMap;
 import io.swagger.codegen.v3.*;
 
 import java.io.File;
@@ -596,6 +597,7 @@ public class ScalaCaskCodegen extends AbstractScalaCodegen {
         if (op.returnType != null && !op.returnType.isEmpty()) {
             return "ServiceResponse[" + op.returnType + "]";
         }
+
         Optional<CodegenResponse> successResponse = op.responses.stream().filter((r) -> r.code.startsWith("2")).findFirst();
         if (successResponse.isPresent()) {
             CodegenResponse r = successResponse.get();
