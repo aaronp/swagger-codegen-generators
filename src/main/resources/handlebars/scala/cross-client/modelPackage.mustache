@@ -21,6 +21,7 @@ given ReadWriter[LocalDate] = readwriter[String].bimap[LocalDate](
 
 trait Read[-A, +R]:
     def read(input: A): R
+
 object Read:
     def apply[A,R](f : A => R) = new Read[A,R] {
         override def read(input: A): R = f(input)

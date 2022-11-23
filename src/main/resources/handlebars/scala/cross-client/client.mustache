@@ -36,24 +36,15 @@ trait {{classFilename}}Client[F[_] : cats.Functor](transport : HttpRequest[Binar
             ))
         }
 
+        {{#vendorExtensions.hasReturnType}}
         /**
          * This maps a means to unmarshal the response by ResponseCoords (e.g. status code and content type),
          * which can be supplied/overridden in subclasses
          */
         final def {{{operationId}}}AsResponse : Unmarshal[{{{operationIdCamelCase}}}Response] = {{>clientResponseMap}}
+        {{/vendorExtensions.hasReturnType}}
 
         {{#hasBodyParam}}
-        // collectionFormat = {{{bodyParam.collectionFormat}}}
-        // datatypeWithEnum = {{{bodyParam.dataType}}}
-        // datatype = {{{bodyParam.datatypeWithEnum}}}
-        // dataFormat = {{{bodyParam.dataFormat}}}
-        // baseType = {{{bodyParam.baseType}}}
-        // items = {{{bodyParam.items}}}
-        // isPrimitiveType = {{{bodyParam.isPrimitiveType}}}
-        // isObject = {{{bodyParam.isObject}}}
-        // isContainer = {{{bodyParam.isContainer}}}
-        // isNumeric = {{{bodyParam.isNumeric}}}
-        /* debug = {{{bodyParam.vendorExtensions.x-debug}}} */
         final def {{{operationId}}}AsBinary : Marshal[{{{bodyParam.dataType}}}] = (_ : ContentType) match {
             case ContentType.`application/json` =>
               val writer = implicitly[Write[{{bodyParam.dataType}}, Array[Byte]]]
@@ -76,9 +67,11 @@ trait {{classFilename}}Client[F[_] : cats.Functor](transport : HttpRequest[Binar
         */
         def {{operationId}}({{#allParams}}{{paramName}} : {{dataType}}{{#hasMore}},{{/hasMore}}{{/allParams}}) = {
             val request = {{operationId}}AsRequest({{#allParams}}{{paramName}}{{#hasMore}},{{/hasMore}}{{/allParams}})
-            transport(request).map { response =>
-                {{operationId}}AsResponse(response.coords)
-            }
+           {{#vendorExtensions.hasReturnType}}
+               transport(request).map({{operationId}}AsResponse)
+           {{else}}
+               transport(request)
+           {{/vendorExtensions.hasReturnType}}
         }
     {{/operation}}
 {{/operations}}

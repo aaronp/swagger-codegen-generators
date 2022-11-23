@@ -22,7 +22,7 @@ end ContentType
 /** Serves as a key to response negotiation */
 case class ResponseCoords(statusCode : Int, contentType : ContentType)
 
-type Unmarshal[A] = ResponseCoords => Try[A]
+type Unmarshal[A] = ResponseData => Try[A]
 
 type Marshal[A] = ContentType => A => Binary
 

@@ -1,9 +1,15 @@
-Map(
+(response:ResponseData) => response.coords match {
 {{#responses}}
+    /*
+    {{this}}
+    */
+    case ResponseCoords({{code}}, _) => response.body match {
+      case Some(body) => util.Failure(new IllegalStateException("TODO - unmarshal $body"))
+      case None => util.Failure(new IllegalStateException("response body was empty"))
+    }
 {{#contents}}
-
-    ResponseCoords({{code}}, ContentType("{{contentType}}")) -> ??? // {{parameters}}
 {{/contents}}
 {{/responses}}
-)
+    case other => util.Failure(new UnsupportedOperationException(s"BUG: {{operationId}}AsResponse can't understand/handle $other"))
+}
 

@@ -375,11 +375,14 @@ public class CrossClientCodegen extends AbstractScalaCodegen {
         // for the declaration site
         op.vendorExtensions.put("x-query-args", queryArgs(op));
 
+
         op.vendorExtensions.put("x-response-type", ScalaCaskCodegen.enrichResponseType(op));
 
         // operations can return various encodings (json, xml) per response type (one for 200, one for 400)
         // the 'responseTypes' returns a union type of all the responses for a particular operation
         op.vendorExtensions.put("responseTypes", responseTypes(op));
+
+        op.vendorExtensions.put("hasReturnType", !responseTypes(op).equals("Unit"));
 
         // how should the client encode the request body? just choose the first one
         op.vendorExtensions.put("defaultContentType", defaultContentType(op));
