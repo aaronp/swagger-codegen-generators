@@ -2,14 +2,19 @@
 package {{apiPackage}}
 
 import scala.util.Try
+import scala.annotation.targetName
 
 opaque type ContentType = String
 
 object ContentType:
   def apply(contentType : String) : ContentType = contentType.trim().toLowerCase()
+  @targetName("application_json")
   val `application/json` :  ContentType = "application/json"
+  @targetName("application_xml")
   val `application/xml` :  ContentType = "application/xml"
+  @targetName("application_octetstream")
   val `application/octet-stream` :  ContentType = "application/octet-stream"
+  @targetName("text_plain")
   val `text/plain` :  ContentType = "text/plain"
 end ContentType
 
