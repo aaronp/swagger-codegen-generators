@@ -387,7 +387,10 @@ public class CrossClientCodegen extends AbstractScalaCodegen {
         // how should the client encode the request body? just choose the first one
         op.vendorExtensions.put("defaultContentType", defaultContentType(op));
 
-        String responseDebug = String.join("\n\n - - - - - - -\n\n", op.responses.stream().map(r -> ScalaCaskCodegen.inComment(pretty(r))).collect(Collectors.toList()));
+        String responseDebug = String.join("\n\n - - - - - - -\n\n", op.responses.stream().map(r -> {
+            r.vendorExtensions.put("parent", op);
+            return ScalaCaskCodegen.inComment(pretty(r));
+        }).collect(Collectors.toList()));
         op.vendorExtensions.put("x-responses", responseDebug);
     }
 

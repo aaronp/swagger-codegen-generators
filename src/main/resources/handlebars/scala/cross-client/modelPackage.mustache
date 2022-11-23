@@ -22,11 +22,21 @@ given ReadWriter[LocalDate] = readwriter[String].bimap[LocalDate](
 trait Read[-A, +R]:
     def read(input: A): R
 
-object Read:
+object Read {
     def apply[A,R](f : A => R) = new Read[A,R] {
         override def read(input: A): R = f(input)
     }
+    given Read[Array[Byte], String] with {
+        def read(bytes: Array[Byte]) = new String(bytes)
+    }
 
+    given fromJson[A](using fromJson: upickle.default.Reader[A]): Read[Array[Byte], A] with {
+        def read(bytes: Array[Byte]) = {
+            val jason = ujson.read(new String(bytes))
+            upickle.default.read[A](jason)
+        }
+    }
+}
 trait Write[-A, +R]:
     def write(input: A): R
 

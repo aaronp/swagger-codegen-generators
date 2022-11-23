@@ -22,7 +22,7 @@ trait {{classFilename}}Client[F[_] : cats.Functor](transport : HttpRequest[Binar
 {{#operations}}
     {{#operation}}
 
-        final def {{operationId}}AsRequest({{#allParams}}{{paramName}} : {{dataType}}{{#hasMore}},{{/hasMore}}{{/allParams}}) : HttpRequest.{{{vendorExtensions.HttpRequestInstance}}}[Binary] = {
+        def {{operationId}}AsRequest({{#allParams}}{{paramName}} : {{dataType}}{{#hasMore}},{{/hasMore}}{{/allParams}}) : HttpRequest.{{{vendorExtensions.HttpRequestInstance}}}[Binary] = {
             {{#hasBodyParam}}
                 val {{operationId}}PayloadBytes = {{operationId}}AsBinary(ContentType.`{{{vendorExtensions.defaultContentType}}}`)({{bodyParam.paramName}})
             {{/hasBodyParam}}
@@ -41,11 +41,11 @@ trait {{classFilename}}Client[F[_] : cats.Functor](transport : HttpRequest[Binar
          * This maps a means to unmarshal the response by ResponseCoords (e.g. status code and content type),
          * which can be supplied/overridden in subclasses
          */
-        final def {{{operationId}}}AsResponse : Unmarshal[{{{operationIdCamelCase}}}Response] = {{>clientResponseMap}}
+        def {{{operationId}}}AsResponse : Unmarshal[{{{operationIdCamelCase}}}Response] = {{>clientResponseMap}}
         {{/vendorExtensions.hasReturnType}}
 
         {{#hasBodyParam}}
-        final def {{{operationId}}}AsBinary : Marshal[{{{bodyParam.dataType}}}] = (_ : ContentType) match {
+        def {{{operationId}}}AsBinary : Marshal[{{{bodyParam.dataType}}}] = (_ : ContentType) match {
             case ContentType.`application/json` =>
               val writer = implicitly[Write[{{bodyParam.dataType}}, Array[Byte]]]
               ({{bodyParam.paramName}}:{{bodyParam.dataType}}) => writer.write({{bodyParam.paramName}})
