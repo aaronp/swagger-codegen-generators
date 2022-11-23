@@ -29,8 +29,8 @@ case class {{classname}}(
     }
 end {{classname}}
 
-object {{classname}}:
-  given rw: RW[{{classname}}] = macroRW
+object {{classname}} {
+    given rw: RW[{{classname}}] = macroRW
 
     given Write[{{classname}}, ujson.Value] with {
         def write(input: {{classname}}) = input.asJson
@@ -47,10 +47,14 @@ object {{classname}}:
     }
 
   def fromJsonString(jason : String) : {{classname}} = read[{{classname}}](jason)
+
   def fromBinary(message: Array[Byte]): {{classname}} = readBinary[{{classname}}](message)
+
   def manyFromJsonString(jason : String) : List[{{classname}}] = read[List[{{classname}}]](jason)
+
   def mapFromJsonString(jason : String) : Map[String, {{classname}}] = read[Map[String, {{classname}}]](jason)
-end {{classname}}
+
+}
 
 {{/model}}
 {{/models}}

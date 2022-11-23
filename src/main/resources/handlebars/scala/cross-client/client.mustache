@@ -4,6 +4,8 @@ package {{apiPackage}}
 {{#imports}}import _root_.{{import}}
 {{/imports}}
 
+import {{{modelPackage}}}.*
+
 import cats.syntax.functor.*
 
 object {{classFilename}}Client:
@@ -41,11 +43,27 @@ trait {{classFilename}}Client[F[_] : cats.Functor](transport : HttpRequest[Binar
         final def {{{operationId}}}AsResponse : Unmarshal[{{{operationIdCamelCase}}}Response] = {{>clientResponseMap}}
 
         {{#hasBodyParam}}
-        final def {{{operationId}}}AsBinary : Marshal[{{{operationIdCamelCase}}}Response] = (_ : ContentType) match {
-            case ContentType.`application/json` => (_:{{bodyParam.dataType}}).asJsonBytes
-            case ContentType.`application/octet-stream` => (_:{{bodyParam.dataType}}).asMsgBytes
+        // collectionFormat = {{{bodyParam.collectionFormat}}}
+        // datatypeWithEnum = {{{bodyParam.dataType}}}
+        // datatype = {{{bodyParam.datatypeWithEnum}}}
+        // dataFormat = {{{bodyParam.dataFormat}}}
+        // baseType = {{{bodyParam.baseType}}}
+        // items = {{{bodyParam.items}}}
+        // isPrimitiveType = {{{bodyParam.isPrimitiveType}}}
+        // isObject = {{{bodyParam.isObject}}}
+        // isContainer = {{{bodyParam.isContainer}}}
+        // isNumeric = {{{bodyParam.isNumeric}}}
+        /* debug = {{{bodyParam.vendorExtensions.x-debug}}} */
+        final def {{{operationId}}}AsBinary : Marshal[{{{bodyParam.dataType}}}] = (_ : ContentType) match {
+            case ContentType.`application/json` =>
+              val writer = implicitly[Write[{{bodyParam.dataType}}, Array[Byte]]]
+              ({{bodyParam.paramName}}:{{bodyParam.dataType}}) => writer.write({{bodyParam.paramName}})
+            case ContentType.`application/octet-stream` =>
+                val writer = implicitly[Write[{{bodyParam.dataType}}, Array[Byte]]]
+                ({{bodyParam.paramName}}:{{bodyParam.dataType}}) => writer.write({{bodyParam.paramName}})
             case other => sys.error(s"BUG / TODO: content type '$other' not supported")
         }
+
         {{/hasBodyParam}}
 
         /** {{summary}}
