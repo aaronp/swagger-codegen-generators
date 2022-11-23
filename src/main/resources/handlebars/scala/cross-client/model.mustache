@@ -17,8 +17,16 @@ case class {{classname}}(
   {{{name}}}: {{^required}}Option[{{/required}}{{datatype}}{{^required}}]{{/required}}{{#hasMore}},{{/hasMore}}
   {{/vars}}):
     def asJsonString = write(this)
-    def asJson       = writeJs(this)
-    def asMsg        = writeMsg(this)
+    def asJson = writeJs(this)
+    def asJsonBytes = withBaos(asJson.writeBytesTo)
+    def asMsg = writeMsg(this)
+    def asMsgBytes = withBaos(asMsg.writeBytesTo)
+    private def withBaos(f : java.io.ByteArrayOutputStream => Unit) : Array[Byte] = {
+        val baos = new java.io.ByteArrayOutputStream()
+        f(baos)
+        baos.flush()
+        baos.toByteArray
+    }
 end {{classname}}
 
 object {{classname}}:
