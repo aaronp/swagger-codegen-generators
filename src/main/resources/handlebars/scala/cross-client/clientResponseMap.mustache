@@ -1,19 +1,5 @@
 (response:ResponseData) => response.coords match {
 {{#responses}}
-    /*
-    CodegenResponse:
-    contents: {{contents}}
-    headers: {{headers}}
-    dataType: {{dataType}}
-    baseType: {{baseType}}
-    containerType: {{containerType}}
-
-    jsonSchema: {{jsonSchema}}
-    parent : {{vendorExtensions.parent}}
-    responseTypes : {{vendorExtensions.parent.vendorExtensions.responseTypes}}
-    hasReturnType : {{vendorExtensions.parent.vendorExtensions.hasReturnType}}
-    schema: {{schema}}
-    */
     case ResponseCoords({{code}}, _) => response.body match {
       case Some(body) => util.Try(implicitly[Read[Array[Byte], {{vendorExtensions.parent.vendorExtensions.responseTypes}}]].read(body))
       case None => util.Failure(new IllegalStateException("response body was empty"))

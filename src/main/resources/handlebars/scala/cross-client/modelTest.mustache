@@ -2,17 +2,24 @@
 package {{package}}
 
 import utest._
-import org.scalacheck.*
-import Arbitrary.arbitrary
 
 {{#models}}
 {{#model}}
 object {{classname}}Test extends TestSuite {
-    //val dataArb = Arbitrary(Gen.resultOf({{classname}}))
     val tests = Tests{
-        test("test1"){
+{{#schema.examples}}
+    /** example:
+{{{this}}}
+     */
+{{/schema.examples}}
 
+{{#schema.example}}
+        test("json marshalling"){
+            val exampleJason = """{{{this}}}"""
+            val instance = {{classname}}.fromJsonString(exampleJason)
+            instance.asJsonString ==> exampleJason
         }
+{{/schema.example}}
     }
 }
 

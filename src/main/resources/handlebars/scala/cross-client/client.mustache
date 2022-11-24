@@ -11,7 +11,9 @@ import cats.syntax.functor.*
 object {{classFilename}}Client:
 {{#operations}}
     {{#operation}}
+        {{#vendorExtensions.hasReturnType}}
         type {{{operationIdCamelCase}}}Response = {{{vendorExtensions.responseTypes}}}
+        {{/vendorExtensions.hasReturnType}}
     {{/operation}}
 {{/operations}}
 end {{classFilename}}Client
