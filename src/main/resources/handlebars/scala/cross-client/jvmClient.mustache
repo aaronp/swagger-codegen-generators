@@ -4,12 +4,85 @@ package {{apiPackage}}
 {{#imports}}import _root_.{{import}}
 {{/imports}}
 
-object JVMClient {
 
-    extension [A](request: HttpRequest[A]) {
-        def asRequest(hostPort: String) = requests.Request(
-            request.content.path
+case class JVMClient(hostPort : String) {
+
+  def send(req : HttpRequest[Binary]) : Try[ResponseData] = {
+    req match {
+      case HttpRequest.Put(d8a) =>
+        import d8a.*
+        requests.put(s"$hostPort/$path",
+          params = d8a.queryParams.asMap(),
+          headers = d8a.headers.asMap(),
+          cookieValues = d8a.cookies.asMap(),
+          data = d8a.body.fold {
+            d8a.formData.asMap().map {
+              case (name, value) => MultiItem(name, value)
+            } : RequestBlob
+          } (b => b : RequestBlob)
+        )
+      case HttpRequest.Post(d8a) =>
+        import d8a.*
+        requests.post(s"$hostPort/$path",
+          params = d8a.queryParams.asMap(),
+          headers = d8a.headers.asMap(),
+          cookieValues = d8a.cookies.asMap(),
+          data = d8a.body.fold {
+            d8a.formData.asMap().map {
+              case (name, value) => MultiItem(name, value)
+            }: RequestBlob
+          }(b => b: RequestBlob)
+        )
+      case HttpRequest.Get(d8a) =>
+        import d8a.*
+        requests.get(s"$hostPort/$path",
+          params = d8a.queryParams.asMap(),
+          headers = d8a.headers.asMap(),
+          cookieValues = d8a.cookies.asMap(),
+          data = d8a.body.fold {
+            d8a.formData.asMap().map {
+              case (name, value) => MultiItem(name, value)
+            }: RequestBlob
+          }(b => b: RequestBlob)
+        )
+      case HttpRequest.Patch(d8a) =>
+        import d8a.*
+        requests.patch(s"$hostPort/$path",
+          params = d8a.queryParams.asMap(),
+          headers = d8a.headers.asMap(),
+          cookieValues = d8a.cookies.asMap(),
+          data = d8a.body.fold {
+            d8a.formData.asMap().map {
+              case (name, value) => MultiItem(name, value)
+            }: RequestBlob
+          }(b => b: RequestBlob)
+        )
+      case HttpRequest.Delete(d8a) =>
+        import d8a.*
+        requests.delete(s"$hostPort/$path",
+          params = d8a.queryParams.asMap(),
+          headers = d8a.headers.asMap(),
+          cookieValues = d8a.cookies.asMap(),
+          data = d8a.body.fold {
+            d8a.formData.asMap().map {
+              case (name, value) => MultiItem(name, value)
+            }: RequestBlob
+          }(b => b: RequestBlob)
+        )
+      case HttpRequest.Custom(method, d8a) =>
+        import d8a.*
+        requests.send(method)(s"$hostPort/$path",
+          params = d8a.queryParams.asMap(),
+          headers = d8a.headers.asMap(),
+          cookieValues = d8a.cookies.asMap(),
+          data = d8a.body.fold {
+            d8a.formData.asMap().map {
+              case (name, value) => MultiItem(name, value)
+            }: RequestBlob
+          }(b => b: RequestBlob)
         )
     }
+  }
+
 
 }

@@ -24,7 +24,30 @@ trait {{classFilename}}Client[F[_] : cats.Functor](transport : HttpRequest[Binar
 {{#operations}}
     {{#operation}}
 
-        def {{operationId}}AsRequest({{#allParams}}{{paramName}} : {{dataType}}{{#hasMore}},{{/hasMore}}{{/allParams}}) : HttpRequest.{{{vendorExtensions.HttpRequestInstance}}}[Binary] = {
+        /** {{summary}}
+        * {{description}}
+        * parameters:
+        {{#allParams}}
+            * @{{paramName}} : {{dataType}} - {{hasMore}}
+        {{/allParams}}
+        * @return {{returnType}}
+        */
+        def {{operationId}}({{#allParams}}{{paramName}} : {{dataType}}{{#hasMore}},{{/hasMore}}{{/allParams}}) = {
+        val request = {{operationId}}AsRequest({{#allParams}}{{paramName}}{{#hasMore}},{{/hasMore}}{{/allParams}})
+        {{#vendorExtensions.hasReturnType}}
+            transport(request).map({{operationId}}AsResponse)
+        {{else}}
+            transport(request)
+        {{/vendorExtensions.hasReturnType}}
+        }
+
+        /**
+        {{#allParams}}
+         * @{{paramName}} {{{description}}}
+        {{/allParams}}
+         * @return a request object for the given parameters
+         */
+        protected def {{operationId}}AsRequest({{#allParams}}{{paramName}} : {{dataType}}{{#hasMore}},{{/hasMore}}{{/allParams}}) : HttpRequest.{{{vendorExtensions.HttpRequestInstance}}}[Binary] = {
             {{#hasBodyParam}}
                 val {{operationId}}PayloadBytes = {{operationId}}AsBinary(ContentType.`{{{vendorExtensions.defaultContentType}}}`)({{bodyParam.paramName}})
             {{/hasBodyParam}}
@@ -39,15 +62,17 @@ trait {{classFilename}}Client[F[_] : cats.Functor](transport : HttpRequest[Binar
         }
 
         {{#vendorExtensions.hasReturnType}}
+
         /**
          * This maps a means to unmarshal the response by ResponseCoords (e.g. status code and content type),
          * which can be supplied/overridden in subclasses
+         * @return a means to unmarshal the response given a particular ContentType
          */
-        def {{{operationId}}}AsResponse : Unmarshal[{{{operationIdCamelCase}}}Response] = {{>clientResponseMap}}
+        protected def {{{operationId}}}AsResponse : Unmarshal[{{{operationIdCamelCase}}}Response] = {{>clientResponseMap}}
         {{/vendorExtensions.hasReturnType}}
 
         {{#hasBodyParam}}
-        def {{{operationId}}}AsBinary : Marshal[{{{bodyParam.dataType}}}] = (_ : ContentType) match {
+        protected def {{{operationId}}}AsBinary : Marshal[{{{bodyParam.dataType}}}] = (_ : ContentType) match {
             case ContentType.`application/json` =>
               val writer = implicitly[Write[{{bodyParam.dataType}}, Array[Byte]]]
               ({{bodyParam.paramName}}:{{bodyParam.dataType}}) => writer.write({{bodyParam.paramName}})
@@ -56,25 +81,8 @@ trait {{classFilename}}Client[F[_] : cats.Functor](transport : HttpRequest[Binar
                 ({{bodyParam.paramName}}:{{bodyParam.dataType}}) => writer.write({{bodyParam.paramName}})
             case other => sys.error(s"BUG / TODO: content type '$other' not supported")
         }
-
         {{/hasBodyParam}}
 
-        /** {{summary}}
-        * {{description}}
-        * parameters:
-        {{#allParams}}
-        * @{{paramName}} : {{dataType}} - {{hasMore}}
-        {{/allParams}}
-        * @return {{returnType}}
-        */
-        def {{operationId}}({{#allParams}}{{paramName}} : {{dataType}}{{#hasMore}},{{/hasMore}}{{/allParams}}) = {
-            val request = {{operationId}}AsRequest({{#allParams}}{{paramName}}{{#hasMore}},{{/hasMore}}{{/allParams}})
-           {{#vendorExtensions.hasReturnType}}
-               transport(request).map({{operationId}}AsResponse)
-           {{else}}
-               transport(request)
-           {{/vendorExtensions.hasReturnType}}
-        }
     {{/operation}}
 {{/operations}}
 }

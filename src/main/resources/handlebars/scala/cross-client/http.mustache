@@ -32,7 +32,8 @@ object HttpData {
 }
 
 extension (data: HttpData) {
-  def toMap: Map[String, _] = data
+  def asMap(listSeparator: String = ","): Map[String, String] = data.view.mapValues(_.asQueryParam(listSeparator).getOrElse("")).toMap
+  def isEmpty = data.isEmpty
 }
 case class RequestData[A](
     path: String,
@@ -41,7 +42,14 @@ case class RequestData[A](
     formData: HttpData = HttpData(),
     queryParams: HttpData = HttpData(),
     body: Option[A] = None
-)
+) :
+    def pathLeadingSlash = if !path.startsWith("/") then s"/$path" else path
+
+    def url = if queryParams.isEmpty then pathLeadingSlash else queryParams.asMap().map {
+        case (key, value) => s"$key=$value"
+    }.mkString(s"$pathLeadingSlash?", ",", "")
+
+end RequestData
 
 case class ResponseData(
     coords : ResponseCoords,

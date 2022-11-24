@@ -9,6 +9,8 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -19,14 +21,15 @@ public class ScalaCaskCodegenTest extends AbstractCodegenTest {
 
     @Test
     public void testPetstore() throws Exception {
-        folder.create();
-        final File output = folder.getRoot();
+//        folder.create();
+//        final File output = folder.getRoot();
+        final File output = Files.createDirectories(Paths.get("target/petstore-server-cask")).toFile();
 
         final CodegenConfigurator configurator = new CodegenConfigurator()
             .setLang("scala-cask")
             .setSkipOverwrite(false)
             .setApiPackage("the.api.packg")
-            .setModelNamePrefix("Model")
+//            .setModelNamePrefix("")
             .setInvokerPackage("in.voker.pckg")
             .setInputSpecURL("src/test/resources/3_0_0/petstore.yaml")
             .setOutputDir(output.getAbsolutePath());
@@ -36,35 +39,31 @@ public class ScalaCaskCodegenTest extends AbstractCodegenTest {
         // the generator should simply complete w/o exception
         List<File> result = new DefaultGenerator().opts(clientOptInput).generate();
         Set<String> generatedNames = result.stream().map(f -> f.getName()).collect(Collectors.toSet());
-        Set<String> expectedFiles = new HashSet<>();
-        expectedFiles.add("DefaultService.scala");
-        expectedFiles.add(".gitignore");
-        expectedFiles.add("ServiceResponse.scala");
-        expectedFiles.add("ModelCategory.scala");
-        expectedFiles.add("App.scala");
-        expectedFiles.add("ModelUser.scala");
-        expectedFiles.add("DefaultRoutes.scala");
-        expectedFiles.add("ModelPet.scala");
-        expectedFiles.add("plugins.sbt");
-        expectedFiles.add("build.properties");
-        expectedFiles.add("PetRoutes.scala");
-        expectedFiles.add(".scalafmt.conf");
-        expectedFiles.add("UserService.scala");
-        expectedFiles.add("build.sbt");
-        expectedFiles.add("PetService.scala");
-        expectedFiles.add("ModelOrder.scala");
-        expectedFiles.add("UserRoutes.scala");
-        expectedFiles.add("StoreRoutes.scala");
-        expectedFiles.add("README.md");
-        expectedFiles.add("ModelApiResponse.scala");
-        expectedFiles.add("ModelTest.scala");
-        expectedFiles.add("ModelTag.scala");
-        expectedFiles.add("Modelpet_petId_body.scala");
-        expectedFiles.add("StoreService.scala");
-        expectedFiles.add("VERSION");
-        expectedFiles.add("package.scala");
-        Assert.assertEquals(generatedNames, expectedFiles);
-
+        Assert.assertTrue(generatedNames.contains("DefaultService.scala"));
+        Assert.assertTrue(generatedNames.contains(".gitignore"));
+        Assert.assertTrue(generatedNames.contains("ServiceResponse.scala"));
+        Assert.assertTrue(generatedNames.contains("Category.scala"));
+        Assert.assertTrue(generatedNames.contains("App.scala"));
+        Assert.assertTrue(generatedNames.contains("User.scala"));
+        Assert.assertTrue(generatedNames.contains("DefaultRoutes.scala"));
+        Assert.assertTrue(generatedNames.contains("Pet.scala"));
+        Assert.assertTrue(generatedNames.contains("plugins.sbt"));
+        Assert.assertTrue(generatedNames.contains("build.properties"));
+        Assert.assertTrue(generatedNames.contains("PetRoutes.scala"));
+        Assert.assertTrue(generatedNames.contains(".scalafmt.conf"));
+        Assert.assertTrue(generatedNames.contains("UserService.scala"));
+        Assert.assertTrue(generatedNames.contains("build.sbt"));
+        Assert.assertTrue(generatedNames.contains("PetService.scala"));
+        Assert.assertTrue(generatedNames.contains("Order.scala"));
+        Assert.assertTrue(generatedNames.contains("UserRoutes.scala"));
+        Assert.assertTrue(generatedNames.contains("StoreRoutes.scala"));
+        Assert.assertTrue(generatedNames.contains("README.md"));
+        Assert.assertTrue(generatedNames.contains("ApiResponse.scala"));
+        Assert.assertTrue(generatedNames.contains("Test.scala"));
+        Assert.assertTrue(generatedNames.contains("Tag.scala"));
+        Assert.assertTrue(generatedNames.contains("Pet_petId_body.scala"));
+        Assert.assertTrue(generatedNames.contains("StoreService.scala"));
+        Assert.assertTrue(generatedNames.contains("VERSION"));
+        Assert.assertTrue(generatedNames.contains("package.scala"));
     }
-
 }

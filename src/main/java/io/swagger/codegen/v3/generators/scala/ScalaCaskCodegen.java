@@ -382,7 +382,8 @@ public class ScalaCaskCodegen extends AbstractScalaCodegen {
         }
 
         // TODO - multiple operations may have the same query params, so we'll need to somehow merge them (and take the right type)
-        public boolean hasGroupQueryParams() {
+
+        public boolean getHasGroupQueryParams() {
             return operations.stream().flatMap(op -> op.queryParams.stream()).count() > 0;
         }
 
