@@ -23,6 +23,7 @@ public class CrossClientCodegen extends AbstractScalaCodegen {
         SHARED
     }
 
+    private String sourceFolderName;
     private String groupId;
     private String artifactId;
     private String basePackage;
@@ -109,6 +110,7 @@ public class CrossClientCodegen extends AbstractScalaCodegen {
     public void processOpts() {
         super.processOpts();
 
+        sourceFolderName = env("SOURCE_FOLDER", "src");
         outputFolder = env("OUTPUT_DIR", orElse(outputFolder, "generated-code/cross-client"));
         groupId = env("GROUP_ID", orElse(groupId, "io.swagger"));
         artifactId = env("ARTIFACT_ID", orElse(artifactId, "cross-client"));
@@ -123,10 +125,10 @@ public class CrossClientCodegen extends AbstractScalaCodegen {
         appPackage = env("APP_PACKAGE", basePackage);
         apiPath = apiPackage.replace('.', '/');
         modelPath = modelPackage.replace('.', '/');
-        sharedApiPath = "client/shared/src/main/scala/" + apiPath;
-        sharedModelPath = "client/shared/src/main/scala/" + modelPath;
-        jsClientPath = "client/js/src/main/scala/" + apiPath;
-        jvmClientPath = "client/jvm/src/main/scala/" + apiPath;
+        sharedApiPath = "client/shared/" + sourceFolderName + "/main/scala/" + apiPath;
+        sharedModelPath = "client/shared/" + sourceFolderName + "/main/scala/" + modelPath;
+        jsClientPath = "client/js/" + sourceFolderName + "/main/scala/" + apiPath;
+        jvmClientPath = "client/jvm/" + sourceFolderName + "/main/scala/" + apiPath;
 
 
         {
@@ -198,6 +200,12 @@ public class CrossClientCodegen extends AbstractScalaCodegen {
     public String modelFileFolder() {
         Object src = additionalProperties.get(CodegenConstants.SOURCE_FOLDER);
         return outputFolder + File.separator + src;
+    }
+
+    @Override
+    public String getSourceFolder() {
+        String src = super.getSourceFolder();
+        return src;
     }
 
     @Override
